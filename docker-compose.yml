@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  discord-bot:
+    build: .
+    container_name: discord-mcp-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    # By default, docker-compose runs the standalone bot. 
+    # To run the MCP server instead, uncomment the line below:
+    # command: npm run mcp

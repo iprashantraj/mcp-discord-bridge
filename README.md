@@ -141,6 +141,24 @@ Add the server to your client's MCP configuration file. The generic structure lo
 For **detailed, step-by-step connection instructions** for Claude Desktop, Cursor, Windsurf, Continue.dev, Zed Editor, and custom apps, please see the [CONNECTING.txt](./CONNECTING.txt) file included in this repository.
 
 Once connected, your AI assistant will have access to all Discord tools listed above!
+
+---
+
+## 🐳 Docker Deployment
+
+You can run the standalone bot 24/7 on a server (like a Raspberry Pi or VPS) using Docker.
+
+```bash
+# 1. Make sure your .env file is set up
+# 2. Start the bot in the background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+```
+
+*(Note: Docker is mostly useful for the standalone bot mode. If you are using this as an MCP server for Claude Desktop on your local machine, running via `npx ts-node` as shown in the MCP config is easier since Claude manages the process.)*
+
 ---
 
 ## 🛠 Development
