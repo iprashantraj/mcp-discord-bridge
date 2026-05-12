@@ -1,26 +1,40 @@
 {
-  "name": "discordbot",
+  "name": "discord-mcp-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "MCP server that lets AI assistants control Discord servers via discord.js",
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "bot": "npx ts-node index.ts",
-    "mcp": "npx ts-node mcp-server.ts"
+    "mcp": "npx ts-node mcp-server.ts",
+    "deploy-commands": "npx ts-node deploy-commands.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
-  "keywords": [],
+  "keywords": [
+    "discord",
+    "mcp",
+    "model-context-protocol",
+    "bot",
+    "ai"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "discord.js": "^14.26.4",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "dotenv": "^17.4.2"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
     "@types/node": "^25.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "eslint": "^9.39.4",
+    "prettier": "^3.8.3",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "typescript": "^5.4.0"
   }
 }
