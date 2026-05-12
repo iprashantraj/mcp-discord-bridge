@@ -118,16 +118,18 @@ The MCP server communicates over **stdio**, making it compatible with any MCP cl
 
 ---
 
-## 🔌 Connecting to Claude Desktop
+## 🔌 Connecting to MCP Clients
 
-Add the following to your `claude_desktop_config.json`:
+This MCP server works with **any** MCP-compatible app (Claude Desktop, Cursor, Windsurf, Continue.dev, Zed, etc.).
+
+Add the server to your client's MCP configuration file. The generic structure looks like this:
 
 ```json
 {
   "mcpServers": {
     "discord": {
       "command": "npx",
-      "args": ["ts-node", "/path/to/discord-mcp-server/mcp-server.ts"],
+      "args": ["ts-node", "/full/path/to/discord-mcp-server/mcp-server.ts"],
       "env": {
         "DISCORD_TOKEN": "your_discord_bot_token_here"
       }
@@ -136,8 +138,9 @@ Add the following to your `claude_desktop_config.json`:
 }
 ```
 
-Once connected, Claude will have access to all Discord tools listed above.
+For **detailed, step-by-step connection instructions** for Claude Desktop, Cursor, Windsurf, Continue.dev, Zed Editor, and custom apps, please see the [CONNECTING.txt](./CONNECTING.txt) file included in this repository.
 
+Once connected, your AI assistant will have access to all Discord tools listed above!
 ---
 
 ## 🛠 Development
