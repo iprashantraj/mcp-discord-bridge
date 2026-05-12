@@ -16,6 +16,8 @@ import {
   Collection,
   Role,
   GuildMember,
+  PermissionsBitField,
+  Guild,
 } from 'discord.js';
 
 // ─── Discord Client Setup ─────────────────────────────────────────────────────
@@ -103,6 +105,16 @@ async function fetchGuildChannel(channelId: string): Promise<GuildBasedChannel> 
   if (!channel) throw new Error(`Channel with ID "${channelId}" not found.`);
   if (!channel.isThread() && 'guild' in channel) return channel as GuildBasedChannel;
   throw new Error(`Channel "${channelId}" is not a guild channel.`);
+}
+
+/** Check if the bot has the required permissions in a guild. */
+function requireBotPermissions(guild: Guild, permissions: bigint[], actionDescription: string): void {
+  const botMember = guild.members.me;
+  if (!botMember) return;
+  const missing = botMember.permissions.missing(permissions);
+  if (missing.length > 0) {
+    throw new Error(`Cannot ${actionDescription}. I don't have the required permissions in this server: ${missing.join(', ')}`);
+  }
 }
 
 function ok(text: string): { content: [{ type: 'text'; text: string }] } {
@@ -361,6 +373,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const catName = requireString(args, 'name');
       const position = optionalNumber(args, 'position');
       const guild = await discordClient.guilds.fetch(guildId);
+      requireBotPermissions(guild, [PermissionsBitField.Flags.ManageChannels], 'create category');
       const cat = await guild.channels.create({
         name: catName,
         type: ChannelType.GuildCategory,
@@ -376,6 +389,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const categoryId = optionalString(args, 'category_id');
       const topic = optionalString(args, 'topic');
       const guild = await discordClient.guilds.fetch(guildId);
+      requireBotPermissions(guild, [PermissionsBitField.Flags.ManageChannels], 'create channel');
       const ch = await guild.channels.create({
         name: channelName,
         type: isVoice ? ChannelType.GuildVoice : ChannelType.GuildText,
@@ -389,6 +403,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const channelId = requireString(args, 'channel_id');
       const reason = optionalString(args, 'reason');
       const ch = await fetchGuildChannel(channelId);
+      requireBotPermissions(ch.guild, [PermissionsBitField.Flags.ManageChannels], 'delete channel');
       if (
         ch instanceof TextChannel ||
         ch instanceof VoiceChannel ||
@@ -405,6 +420,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const channelId = requireString(args, 'channel_id');
       const categoryId = optionalString(args, 'category_id');
       const ch = await fetchGuildChannel(channelId);
+      requireBotPermissions(ch.guild, [PermissionsBitField.Flags.ManageChannels], 'move channel');
       if (ch instanceof TextChannel || ch instanceof VoiceChannel) {
         await ch.setParent(categoryId ?? null);
       } else {
@@ -418,6 +434,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const newName = requireString(args, 'name');
       const reason = optionalString(args, 'reason');
       const ch = await fetchGuildChannel(channelId);
+      requireBotPermissions(ch.guild, [PermissionsBitField.Flags.ManageChannels], 'rename channel');
       if (
         ch instanceof TextChannel ||
         ch instanceof VoiceChannel ||
@@ -523,6 +540,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const roleId = requireString(args, 'role_id');
       const reason = optionalString(args, 'reason');
       const guild = await discordClient.guilds.fetch(guildId);
+      requireBotPermissions(guild, [PermissionsBitField.Flags.ManageRoles], 'assign role');
       const member = await guild.members.fetch(userId);
       const role = await guild.roles.fetch(roleId);
       if (!role) throw new Error(`Role with ID "${roleId}" not found.`);
@@ -536,6 +554,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const roleId = requireString(args, 'role_id');
       const reason = optionalString(args, 'reason');
       const guild = await discordClient.guilds.fetch(guildId);
+      requireBotPermissions(guild, [PermissionsBitField.Flags.ManageRoles], 'remove role');
       const member = await guild.members.fetch(userId);
       const role = await guild.roles.fetch(roleId);
       if (!role) throw new Error(`Role with ID "${roleId}" not found.`);
