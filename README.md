@@ -1,6 +1,6 @@
 # 🤖 Discord MCP Server
 
-A **Model Context Protocol (MCP) server** that gives AI assistants (like Claude) the ability to interact with and control Discord servers — read messages, manage channels, send messages, and more.
+A **Model Context Protocol (MCP) server** that gives AI assistants (like Claude) the ability to interact with and control Discord servers read messages, manage channels, send messages, and more.
 
 Built with **TypeScript**, **discord.js v14**, and the **MCP SDK**.
 
@@ -135,4 +135,4 @@ discord-mcp-server/
 
 ## 📄 License
 
-ISC
+
