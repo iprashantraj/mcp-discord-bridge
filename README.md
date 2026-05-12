@@ -183,5 +183,6 @@ discord-mcp-server/
 ---
 
 ## 📄 License
+MIT License
 
-ISC
+
