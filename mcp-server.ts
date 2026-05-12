@@ -228,6 +228,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           channel_id: { type: 'string' },
           limit: { type: 'number', description: 'Number of messages to fetch (1–100, default 50)' },
+          before: { type: 'string', description: 'Get messages before this message ID (cursor)' },
+          after: { type: 'string', description: 'Get messages after this message ID (cursor)' },
         },
         required: ['channel_id'],
       },
@@ -433,10 +435,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (name === 'get_channel_messages') {
       const channelId = requireString(args, 'channel_id');
       const rawLimit = optionalNumber(args, 'limit');
+      const before = optionalString(args, 'before');
+      const after = optionalString(args, 'after');
       const limit = Math.min(Math.max(rawLimit ?? 50, 1), 100);
       const ch = await fetchGuildChannel(channelId);
       const textCh = asTextChannel(ch);
-      const messages = await textCh.messages.fetch({ limit });
+      const fetchOptions: { limit: number; before?: string; after?: string } = { limit };
+      if (before) fetchOptions.before = before;
+      if (after) fetchOptions.after = after;
+      const messages = await textCh.messages.fetch(fetchOptions);
       const result = [...messages.values()].reverse().map((m) => ({
         id: m.id,
         author: m.author.username,
