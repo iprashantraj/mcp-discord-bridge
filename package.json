@@ -1,5 +1,5 @@
 {
-  "name": "discord-mcp-server",
+  "name": "mcp-discord-bridge",
   "version": "1.0.0",
   "description": "MCP server that lets AI assistants control Discord servers via discord.js",
   "type": "commonjs",
@@ -21,8 +21,11 @@
     "bot",
     "ai"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Prashant Raj",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "discord.js": "^14.26.4",

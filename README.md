@@ -52,8 +52,8 @@ Built with **TypeScript**, **discord.js v14**, and the **MCP SDK**.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/discord-mcp-server.git
-cd discord-mcp-server
+git clone https://github.com/iprashantraj/mcp-discord-bridge.git
+cd mcp-discord-bridge
 ```
 
 ### 2. Install dependencies
@@ -138,7 +138,7 @@ Add the server to your client's MCP configuration file. The generic structure lo
 }
 ```
 
-For **detailed, step-by-step connection instructions** for Claude Desktop, Cursor, Windsurf, Continue.dev, Zed Editor, and custom apps, please see the [CONNECTING.txt](./CONNECTING.txt) file included in this repository.
+For **detailed, step-by-step connection instructions** for Claude Desktop, Cursor, Windsurf, Continue.dev, Zed Editor, and custom apps, please see the [CONNECTING.md](./CONNECTING.md) file included in this repository.
 
 Once connected, your AI assistant will have access to all Discord tools listed above!
 
@@ -204,6 +204,5 @@ discord-mcp-server/
 ---
 
 ## 📄 License
-MIT License
 
-
+[MIT License](./LICENSE)

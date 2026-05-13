@@ -8,14 +8,13 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies (including devDependencies needed for build)
+# Install all dependencies (including devDependencies needed for build)
 RUN npm ci
 
 # Copy the rest of the source code
 COPY . .
 
-# Build the TypeScript code (if we had a build step, we would run it here)
-# Since we are using ts-node, we just prepare the environment
+# Type-check the project
 RUN npx tsc --noEmit
 
 # ==========================================
@@ -25,11 +24,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install all deps (ts-node needed at runtime)
 COPY package*.json ./
-
-# Install ONLY production dependencies
-RUN npm ci --omit=dev
+RUN npm ci && npm cache clean --force
 
 # Copy source files from builder
 COPY --from=builder /app/index.ts ./
@@ -40,4 +37,4 @@ COPY --from=builder /app/tsconfig.json ./
 # Expose no ports since MCP uses stdio and the bot uses WebSockets outbound
 
 # Default command: run the standalone bot
-CMD ["npm", "run", "bot"]
+CMD ["npx", "ts-node", "index.ts"]
