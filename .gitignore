@@ -3,3 +3,10 @@ dist/
 .env
 *.js.map
 *.d.ts
+
+# LeetCode tracker (local automation, not part of MCP server)
+leetcode-tracker.ts
+leetcode-summary.ts
+run-leetcode-*.bat
+.leetcode-state.json
+.leetcode-history.json
