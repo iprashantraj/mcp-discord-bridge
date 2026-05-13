@@ -4,8 +4,9 @@ dist/
 *.js.map
 *.d.ts
 
-# Claude Code worktrees
+# Claude Code
 .claude/
+.mcp.json
 
 # LeetCode tracker (local automation, not part of MCP server)
 leetcode-tracker.ts
