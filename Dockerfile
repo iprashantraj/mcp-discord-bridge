@@ -31,6 +31,8 @@ RUN npm ci && npm cache clean --force
 # Copy source files from builder
 COPY --from=builder /app/index.ts ./
 COPY --from=builder /app/mcp-server.ts ./
+COPY --from=builder /app/mcp-handlers.ts ./
+COPY --from=builder /app/discord-client.ts ./
 COPY --from=builder /app/deploy-commands.ts ./
 COPY --from=builder /app/tsconfig.json ./
 

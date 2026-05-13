@@ -1,22 +1,17 @@
-import 'dotenv/config';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { Client, GatewayIntentBits } from 'discord.js';
+import { GatewayIntentBits } from 'discord.js';
+import { createClient } from './discord-client';
 import { handleToolCall } from './mcp-handlers';
 
 // ─── Discord Client Setup ─────────────────────────────────────────────────────
 
-const discordClient = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.MessageContent,
-  ],
+const discordClient = createClient({
+  extraIntents: [GatewayIntentBits.MessageContent],
 });
 
 let discordReady = false;
@@ -28,28 +23,6 @@ discordClient.once('clientReady', () => {
 
 discordClient.on('error', (err) => {
   console.error(`⚠️ Discord client error (non-fatal): ${err.message}`);
-});
-
-// ─── Env Validation ───────────────────────────────────────────────────────────
-
-const token = process.env.DISCORD_TOKEN;
-if (!token) {
-  console.error('❌ DISCORD_TOKEN is not set. Copy .env.example to .env and fill it in.');
-  process.exit(1);
-}
-
-// ─── Login with timeout guard ─────────────────────────────────────────────────
-
-const LOGIN_TIMEOUT_MS = 15_000;
-const loginTimeout = setTimeout(() => {
-  console.error('❌ Discord login timed out after 15s. Check your token and network.');
-  process.exit(1);
-}, LOGIN_TIMEOUT_MS);
-
-discordClient.login(token).then(() => clearTimeout(loginTimeout)).catch((err: Error) => {
-  clearTimeout(loginTimeout);
-  console.error(`❌ Discord login failed: ${err.message}`);
-  process.exit(1);
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

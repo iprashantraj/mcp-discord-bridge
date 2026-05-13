@@ -1,7 +1,4 @@
-import 'dotenv/config';
 import {
-  Client,
-  GatewayIntentBits,
   Collection,
   Interaction,
   SlashCommandBuilder,
@@ -10,6 +7,7 @@ import {
   Colors,
   ActivityType,
 } from 'discord.js';
+import { createClient } from './discord-client';
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 
@@ -20,13 +18,7 @@ interface SlashCommand {
 
 // ─── Client Setup ─────────────────────────────────────────────────────────────
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMembers,
-  ],
-});
+const client = createClient();
 
 // ─── Commands ─────────────────────────────────────────────────────────────────
 
@@ -163,22 +155,4 @@ client.on('interactionCreate', async (interaction: Interaction) => {
   }
 });
 
-// ─── Login with timeout guard ──────────────────────────────────────────────────
-
-const token = process.env.DISCORD_TOKEN;
-if (!token) {
-  console.error('❌ DISCORD_TOKEN is not set. Copy .env.example to .env and fill it in.');
-  process.exit(1);
-}
-
-const LOGIN_TIMEOUT_MS = 15_000;
-const loginTimeout = setTimeout(() => {
-  console.error('❌ Discord login timed out after 15s. Check your token and network.');
-  process.exit(1);
-}, LOGIN_TIMEOUT_MS);
-
-client.login(token).then(() => clearTimeout(loginTimeout)).catch((err: Error) => {
-  clearTimeout(loginTimeout);
-  console.error(`❌ Login failed: ${err.message}`);
-  process.exit(1);
-});
+// Client is already logged in via createClient()
