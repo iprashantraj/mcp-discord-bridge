@@ -4,6 +4,10 @@ Control your Discord server using AI. Works with **any MCP-compatible app** — 
 
 > **What is MCP?** Model Context Protocol is an open standard that lets AI apps talk to external tools. This project is one of those tools — it gives any AI assistant the power to manage your Discord server.
 
+<p align="center">
+  <img src="./assets/demo.svg" alt="Demo showing Discord MCP tools in action" width="820">
+</p>
+
 ---
 
 ## What Can It Do?

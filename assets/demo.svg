@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="480" viewBox="0 0 820 480">
+  <defs>
+    <style>
+      .bg { fill: #0d1117; }
+      .titlebar { fill: #161b22; }
+      .dot-red { fill: #ff5f57; }
+      .dot-yellow { fill: #febc2e; }
+      .dot-green { fill: #28c840; }
+      .title-text { fill: #8b949e; font-family: Consolas, 'Courier New', monospace; font-size: 13px; }
+      .prompt { fill: #7c3aed; font-family: Consolas, 'Courier New', monospace; font-size: 14px; font-weight: bold; }
+      .user-text { fill: #e6edf3; font-family: Consolas, 'Courier New', monospace; font-size: 14px; }
+      .dim { fill: #8b949e; font-family: Consolas, 'Courier New', monospace; font-size: 14px; }
+      .tool-name { fill: #d2a8ff; font-family: Consolas, 'Courier New', monospace; font-size: 14px; }
+      .info { fill: #58a6ff; font-family: Consolas, 'Courier New', monospace; font-size: 14px; }
+      .result { fill: #7ee787; font-family: Consolas, 'Courier New', monospace; font-size: 14px; }
+    </style>
+  </defs>
+
+  <!-- Window frame -->
+  <rect class="bg" width="820" height="480" rx="12"/>
+  <rect class="titlebar" width="820" height="40" rx="12"/>
+  <rect class="titlebar" y="28" width="820" height="12"/>
+
+  <!-- Traffic lights -->
+  <circle class="dot-red" cx="20" cy="20" r="6"/>
+  <circle class="dot-yellow" cx="40" cy="20" r="6"/>
+  <circle class="dot-green" cx="60" cy="20" r="6"/>
+  <text class="title-text" x="410" y="24" text-anchor="middle">claude &#8212; mcp-discord-bridge</text>
+
+  <!-- Line 1: User prompt -->
+  <text y="75" x="24">
+    <tspan class="prompt">$</tspan>
+    <tspan class="user-text"> List all channels in my Discord server</tspan>
+  </text>
+
+  <!-- Line 2: Tool call -->
+  <text class="dim" x="36" y="97">&#9656; Using <tspan class="tool-name">list_guilds</tspan></text>
+
+  <!-- Line 3: Found server -->
+  <text x="36" y="119">
+    <tspan class="dim">&#9656; Found server: </tspan>
+    <tspan class="info">Progress Tracker</tspan>
+    <tspan class="dim"> (ID: 110846...)</tspan>
+  </text>
+
+  <!-- Line 4: Tool call -->
+  <text class="dim" x="36" y="141">&#9656; Using <tspan class="tool-name">list_channels</tspan></text>
+
+  <!-- Channel list -->
+  <text class="result" x="36" y="173">&#9484; #general <tspan class="dim">.............. text</tspan></text>
+  <text class="result" x="36" y="195">&#9474; #bot-intro <tspan class="dim">............ text</tspan></text>
+  <text class="result" x="36" y="217">&#9474; #dsa-tracker <tspan class="dim">.......... text</tspan></text>
+  <text class="result" x="36" y="239">&#9474; #announcements <tspan class="dim">........ text</tspan></text>
+  <text class="result" x="36" y="261">&#9492; General <tspan class="dim">............... voice</tspan></text>
+
+  <!-- Line: Send message -->
+  <text y="303" x="24">
+    <tspan class="prompt">$</tspan>
+    <tspan class="user-text"> Send "Hello from MCP!" to #general</tspan>
+  </text>
+  <text class="dim" x="36" y="325">&#9656; Using <tspan class="tool-name">send_message</tspan></text>
+  <text class="result" x="36" y="347">&#10003; Message sent to #general</text>
+
+  <!-- Line: Create channel -->
+  <text y="389" x="24">
+    <tspan class="prompt">$</tspan>
+    <tspan class="user-text"> Create a voice channel called "Study Room"</tspan>
+  </text>
+  <text class="dim" x="36" y="411">&#9656; Using <tspan class="tool-name">create_channel</tspan> <tspan class="dim">(type: voice)</tspan></text>
+  <text class="result" x="36" y="433">&#10003; Created voice channel "#Study Room"</text>
+
+  <!-- Cursor -->
+  <text class="prompt" x="24" y="465">$</text>
+  <rect fill="#7c3aed" x="38" y="452" width="8" height="16" rx="1">
+    <animate attributeName="opacity" values="1;0;1" dur="1.2s" repeatCount="indefinite"/>
+  </rect>
+</svg>
