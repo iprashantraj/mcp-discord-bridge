@@ -1,208 +1,188 @@
-# 🤖 Discord MCP Server
+# Discord MCP Server
 
-A **Model Context Protocol (MCP) server** that gives AI assistants (like Claude) the ability to interact with and control Discord servers — manage channels, read messages, manage members, assign roles, and more.
+Control your Discord server using AI. Works with **any MCP-compatible app** — Claude Desktop, Cursor, Windsurf, Continue.dev, Zed, Claude Code, and more.
 
-Built with **TypeScript**, **discord.js v14**, and the **MCP SDK**.
-
----
-
-## ✨ Features
-
-### MCP Tools (for AI integration)
-
-| Category | Tool | Description |
-|---|---|---|
-| **Server** | `list_guilds` | List all Discord servers the bot is in |
-| | `list_channels` | List all channels and categories in a server |
-| **Channels** | `create_category` | Create a new category |
-| | `create_channel` | Create a text or voice channel (optionally inside a category) |
-| | `delete_channel` | Delete a channel or category by ID |
-| | `move_channel` | Move a channel into a different category |
-| | `rename_channel` | Rename a channel or category |
-| **Messages** | `get_channel_messages` | Fetch recent messages from a text channel |
-| | `send_message` | Send a message to a text channel |
-| **Members** | `list_members` | List members in a server (with roles) |
-| | `get_member` | Get detailed info about a specific member |
-| **Roles** | `list_roles` | List all roles in a server |
-| | `assign_role` | Assign a role to a member |
-| | `remove_role` | Remove a role from a member |
-
-### Slash Commands (standalone bot mode)
-
-| Command | Description |
-|---|---|
-| `/ping` | Check bot latency (round-trip + WebSocket) |
-| `/info` | Show bot uptime, guild count, and tech stack |
-| `/serverinfo` | Show detailed server info (owner, members, channels) |
+> **What is MCP?** Model Context Protocol is an open standard that lets AI apps talk to external tools. This project is one of those tools — it gives any AI assistant the power to manage your Discord server.
 
 ---
 
-## 🧰 Tech Stack
+## What Can It Do?
 
-- [discord.js](https://discord.js.org/) v14
-- [@modelcontextprotocol/sdk](https://modelcontextprotocol.io/)
-- TypeScript + ts-node
-- ESLint (typescript-eslint) + Prettier
-- dotenv
+Once connected, your AI assistant can:
+
+- **Channels** — create, delete, rename, move channels and categories
+- **Messages** — read and send messages in any text channel
+- **Members** — list members, view profiles, check roles
+- **Roles** — list, assign, and remove roles
+- **Server** — list all servers the bot is in, view channel layouts
+
+It also runs as a **standalone Discord bot** with `/ping`, `/info`, and `/serverinfo` slash commands.
 
 ---
 
-## 🚀 Getting Started
+## Quick Start (5 minutes)
 
-### 1. Clone the repository
+### Step 1: Create a Discord Bot
+
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
+2. Click **New Application** — give it a name
+3. Go to **Bot** tab — click **Reset Token** — copy and save the token somewhere safe
+4. Also copy the **Application ID** from the General Information tab
+
+### Step 2: Invite the Bot to Your Server
+
+1. In the Developer Portal, go to **OAuth2 > URL Generator**
+2. Check these scopes: `bot`, `applications.commands`
+3. Check these permissions: `Send Messages`, `Read Message History`, `Manage Channels`, `Manage Roles`
+4. Open the generated URL — select your server — authorize
+
+### Step 3: Set Up the Project
 
 ```bash
 git clone https://github.com/iprashantraj/mcp-discord-bridge.git
 cd mcp-discord-bridge
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
-```
-
-### 3. Configure environment variables
-
-```bash
 cp .env.example .env
 ```
 
-Edit `.env` and fill in your values:
+Open `.env` and fill in:
 
 ```env
-DISCORD_TOKEN=your_discord_bot_token_here
-CLIENT_ID=your_application_client_id_here
-GUILD_ID=your_guild_id_here
+DISCORD_TOKEN=paste_your_bot_token_here
+CLIENT_ID=paste_your_application_id_here
+GUILD_ID=paste_your_server_id_here
 ```
 
-> **Where to get these values:**
-> - Go to the [Discord Developer Portal](https://discord.com/developers/applications)
-> - Create an application → add a Bot → copy the **Token** and **Application ID** (= Client ID)
-> - Your **Guild ID**: right-click your server in Discord → "Copy Server ID" (requires Developer Mode)
+> **How to get your Guild ID:** Open Discord > right-click your server name > **Copy Server ID**
+> (If you don't see this option, enable Developer Mode in Settings > Advanced)
 
-### 4. Invite the bot to your server
+### Step 4: Connect to Your AI App
 
-In the Developer Portal, go to **OAuth2 → URL Generator**, select:
-
-- **Scopes:** `bot`, `applications.commands`
-- **Permissions:** `Send Messages`, `Read Message History`, `Manage Channels`, `Manage Roles`
-
-Use the generated URL to invite the bot to your server.
-
----
-
-## ▶️ Running
-
-### Run as a standalone Discord Bot (with slash commands)
-
-First, register the slash commands once:
-
-```bash
-npm run deploy-commands
-```
-
-Then start the bot:
-
-```bash
-npm run bot
-```
-
-### Run as an MCP Server (for AI integration)
-
-```bash
-npm run mcp
-```
-
-The MCP server communicates over **stdio**, making it compatible with any MCP client (e.g., Claude Desktop).
-
----
-
-## 🔌 Connecting to MCP Clients
-
-This MCP server works with **any** MCP-compatible app (Claude Desktop, Cursor, Windsurf, Continue.dev, Zed, etc.).
-
-Add the server to your client's MCP configuration file. The generic structure looks like this:
+Add this to your app's MCP config (replace the path with where you cloned the project):
 
 ```json
 {
   "mcpServers": {
     "discord": {
       "command": "npx",
-      "args": ["ts-node", "/full/path/to/discord-mcp-server/mcp-server.ts"],
+      "args": ["ts-node", "/full/path/to/mcp-discord-bridge/mcp-server.ts"],
       "env": {
-        "DISCORD_TOKEN": "your_discord_bot_token_here"
+        "DISCORD_TOKEN": "paste_your_bot_token_here"
       }
     }
   }
 }
 ```
 
-For **detailed, step-by-step connection instructions** for Claude Desktop, Cursor, Windsurf, Continue.dev, Zed Editor, and custom apps, please see the [CONNECTING.md](./CONNECTING.md) file included in this repository.
+**Where is the config file?**
 
-Once connected, your AI assistant will have access to all Discord tools listed above!
+| App | Config Location |
+|-----|----------------|
+| **Claude Desktop** | Windows: `%APPDATA%\Claude\claude_desktop_config.json` · macOS: `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| **Claude Code** | `~/.claude.json` (or run `/mcp` in Claude Code) |
+| **Cursor** | Settings > search "MCP" > Edit MCP Settings |
+| **Windsurf** | `~/.codeium/windsurf/mcp_settings.json` |
+| **Continue.dev** | `~/.continue/config.json` |
+| **Zed** | `~/.config/zed/settings.json` |
+
+> For detailed per-app instructions, see [CONNECTING.md](./CONNECTING.md).
+
+### Step 5: Done!
+
+Restart your AI app. You should now see Discord tools available. Try asking:
+
+> *"List all channels in my Discord server"*
 
 ---
 
-## 🐳 Docker Deployment
+## All Available Tools
 
-You can run the standalone bot 24/7 on a server (like a Raspberry Pi or VPS) using Docker.
+| Tool | What It Does |
+|------|-------------|
+| `list_guilds` | List all servers the bot is in |
+| `list_channels` | List all channels and categories |
+| `create_category` | Create a new category |
+| `create_channel` | Create a text or voice channel |
+| `delete_channel` | Delete a channel or category |
+| `move_channel` | Move a channel to a different category |
+| `rename_channel` | Rename a channel or category |
+| `get_channel_messages` | Fetch recent messages (up to 100) |
+| `send_message` | Send a message to a channel |
+| `list_members` | List server members with roles |
+| `get_member` | Get detailed info about a member |
+| `list_roles` | List all roles in a server |
+| `assign_role` | Give a role to a member |
+| `remove_role` | Take a role from a member |
+
+---
+
+## Running as a Standalone Bot
+
+If you just want the slash commands without MCP:
 
 ```bash
-# 1. Make sure your .env file is set up
-# 2. Start the bot in the background
-docker-compose up -d
+# Register commands (one time)
+npm run deploy-commands
 
-# View logs
-docker-compose logs -f
+# Start the bot
+npm run bot
 ```
 
-*(Note: Docker is mostly useful for the standalone bot mode. If you are using this as an MCP server for Claude Desktop on your local machine, running via `npx ts-node` as shown in the MCP config is easier since Claude manages the process.)*
+| Command | Description |
+|---------|-------------|
+| `/ping` | Check bot latency |
+| `/info` | Show bot uptime and stats |
+| `/serverinfo` | Show server details |
 
 ---
 
-## 🛠 Development
+## Docker Deployment
+
+Run the bot 24/7 on a server or Raspberry Pi:
 
 ```bash
-# Type check
-npm run typecheck
-
-# Lint
-npm run lint
-
-# Auto-fix lint issues
-npm run lint:fix
-
-# Format code
-npm run format
+docker-compose up -d       # Start in background
+docker-compose logs -f     # View logs
 ```
 
 ---
 
-## 📁 Project Structure
+## Development
+
+```bash
+npm run typecheck    # Type check
+npm run lint         # Lint
+npm run test         # Run tests (26 tests)
+npm run format       # Format code
+```
+
+CI runs automatically on every push and PR via GitHub Actions.
+
+### Project Structure
 
 ```
-discord-mcp-server/
-├── index.ts              # Standalone Discord bot (slash commands)
-├── mcp-server.ts         # MCP server with all Discord tools
-├── deploy-commands.ts    # One-time slash command registration script
-├── .env.example          # Environment variable template
-├── eslint.config.mjs     # ESLint configuration
-├── .prettierrc           # Prettier configuration
-├── tsconfig.json
-└── package.json
+mcp-discord-bridge/
+├── discord-client.ts     # Shared Discord client setup
+├── mcp-server.ts         # MCP server (tool schemas + wiring)
+├── mcp-handlers.ts       # Tool handler logic (registry pattern)
+├── index.ts              # Standalone bot (slash commands)
+├── deploy-commands.ts    # One-time command registration
+├── tests/                # Vitest test suite
+├── .github/workflows/    # CI pipeline
+├── Dockerfile            # Multi-stage Docker build
+└── CONNECTING.md         # Detailed per-app setup guide
 ```
 
 ---
 
-## ⚠️ Security
+## Security
 
-- **Never commit your `.env` file.** It is already listed in `.gitignore`.
-- Treat your `DISCORD_TOKEN` like a password — if exposed, reset it immediately in the Developer Portal.
-- The `Manage Roles` permission allows the bot to assign roles **only below its own highest role** in the hierarchy. This is enforced by Discord automatically.
+- **Never commit your `.env` file** — it's already in `.gitignore`
+- Treat your `DISCORD_TOKEN` like a password — if leaked, regenerate it immediately in the Developer Portal
+- The bot can only assign roles **below its own role** in the hierarchy (Discord enforces this)
 
 ---
 
-## 📄 License
+## License
 
-[MIT License](./LICENSE)
+[MIT](./LICENSE) — use it however you want.
