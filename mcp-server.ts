@@ -38,6 +38,10 @@ discordClient.once('clientReady', () => {
   console.error(`✅ Discord connected as ${discordClient.user?.tag}`);
 });
 
+discordClient.on('error', (err) => {
+  console.error(`⚠️ Discord client error (non-fatal): ${err.message}`);
+});
+
 // ─── Env Validation ───────────────────────────────────────────────────────────
 
 const token = process.env.DISCORD_TOKEN;
@@ -64,7 +68,12 @@ discordClient.login(token).then(() => clearTimeout(loginTimeout)).catch((err: Er
 
 async function waitForDiscord(): Promise<void> {
   if (discordReady) return;
-  await new Promise<void>((resolve) => discordClient.once('clientReady', () => resolve()));
+  await Promise.race([
+    new Promise<void>((resolve) => discordClient.once('clientReady', resolve)),
+    new Promise<void>((_, reject) =>
+      setTimeout(() => reject(new Error('Discord not ready within 8s — proceeding anyway')), 8000),
+    ),
+  ]).catch(() => {/* timeout: continue and let Discord.js surface any real errors */});
 }
 
 /** Require a string arg, throw a descriptive error if missing or wrong type. */
