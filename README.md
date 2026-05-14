@@ -28,14 +28,13 @@ It also runs as a **standalone Discord bot** with `/ping`, `/info`, and `/server
 
 ---
 
-## Quick Start (5 minutes)
+## Quick Start (3 minutes)
 
 ### Step 1: Create a Discord Bot
 
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
 2. Click **New Application** — give it a name
 3. Go to **Bot** tab — click **Reset Token** — copy and save the token somewhere safe
-4. Also copy the **Application ID** from the General Information tab
 
 ### Step 2: Invite the Bot to Your Server
 
@@ -44,36 +43,16 @@ It also runs as a **standalone Discord bot** with `/ping`, `/info`, and `/server
 3. Check these permissions: `Send Messages`, `Read Message History`, `Manage Channels`, `Manage Roles`, `Manage Webhooks`, `Kick Members`, `Ban Members`, `Moderate Members`, `Manage Nicknames`
 4. Open the generated URL — select your server — authorize
 
-### Step 3: Set Up the Project
+### Step 3: Add to Your AI App
 
-```bash
-git clone https://github.com/iprashantraj/mcp-discord-bridge.git
-cd mcp-discord-bridge
-npm install
-cp .env.example .env
-```
-
-Open `.env` and fill in:
-
-```env
-DISCORD_TOKEN=paste_your_bot_token_here
-CLIENT_ID=paste_your_application_id_here
-GUILD_ID=paste_your_server_id_here
-```
-
-> **How to get your Guild ID:** Open Discord > right-click your server name > **Copy Server ID**
-> (If you don't see this option, enable Developer Mode in Settings > Advanced)
-
-### Step 4: Connect to Your AI App
-
-Add this to your app's MCP config (replace the path with where you cloned the project):
+Add this to your app's MCP config — **no cloning or installing needed**:
 
 ```json
 {
   "mcpServers": {
     "discord": {
       "command": "npx",
-      "args": ["ts-node", "/full/path/to/mcp-discord-bridge/mcp-server.ts"],
+      "args": ["-y", "mcp-discord-bridge"],
       "env": {
         "DISCORD_TOKEN": "paste_your_bot_token_here"
       }
@@ -95,7 +74,7 @@ Add this to your app's MCP config (replace the path with where you cloned the pr
 
 > For detailed per-app instructions, see [CONNECTING.md](./CONNECTING.md).
 
-### Step 5: Done!
+### Step 4: Done!
 
 Restart your AI app. You should now see Discord tools available. Try asking:
 
@@ -160,6 +139,35 @@ Restart your AI app. You should now see Discord tools available. Try asking:
 | `unarchive_thread` | Unarchive a thread |
 | `join_thread` | Make the bot join a thread |
 | `delete_thread` | Delete a thread |
+
+---
+
+## Install from Source (for contributors)
+
+If you want to modify the code or run the standalone bot:
+
+```bash
+git clone https://github.com/iprashantraj/mcp-discord-bridge.git
+cd mcp-discord-bridge
+npm install
+cp .env.example .env   # fill in DISCORD_TOKEN, CLIENT_ID, GUILD_ID
+```
+
+Then use ts-node to run directly:
+
+```json
+{
+  "mcpServers": {
+    "discord": {
+      "command": "npx",
+      "args": ["ts-node", "/full/path/to/mcp-discord-bridge/mcp-server.ts"],
+      "env": {
+        "DISCORD_TOKEN": "paste_your_bot_token_here"
+      }
+    }
+  }
+}
+```
 
 ---
 
