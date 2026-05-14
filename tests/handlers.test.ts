@@ -323,6 +323,144 @@ describe('handleToolCall', () => {
     expect(result.content[0].text).toContain('2000 character limit');
   });
 
+  // ── kick_member ──────────────────────────────────────────────────────────
+
+  it('kick_member requires guild_id and user_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'kick_member', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('guild_id');
+  });
+
+  // ── ban_member ──────────────────────────────────────────────────────────
+
+  it('ban_member requires guild_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'ban_member', { user_id: 'u1' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('guild_id');
+  });
+
+  // ── unban_member ────────────────────────────────────────────────────────
+
+  it('unban_member requires user_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'unban_member', { guild_id: '111' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('user_id');
+  });
+
+  // ── timeout_member ──────────────────────────────────────────────────────
+
+  it('timeout_member requires guild_id and user_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'timeout_member', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('guild_id');
+  });
+
+  // ── set_nickname ────────────────────────────────────────────────────────
+
+  it('set_nickname requires guild_id and user_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'set_nickname', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('guild_id');
+  });
+
+  // ── create_role ─────────────────────────────────────────────────────────
+
+  it('create_role requires guild_id and name', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'create_role', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('guild_id');
+  });
+
+  // ── edit_role ───────────────────────────────────────────────────────────
+
+  it('edit_role requires guild_id and role_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'edit_role', { guild_id: '111' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('role_id');
+  });
+
+  // ── delete_role ─────────────────────────────────────────────────────────
+
+  it('delete_role requires guild_id and role_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'delete_role', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('guild_id');
+  });
+
+  // ── create_thread ───────────────────────────────────────────────────────
+
+  it('create_thread requires channel_id and name', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'create_thread', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('channel_id');
+  });
+
+  // ── list_threads ────────────────────────────────────────────────────────
+
+  it('list_threads requires channel_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'list_threads', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('channel_id');
+  });
+
+  // ── archive_thread ──────────────────────────────────────────────────────
+
+  it('archive_thread rejects non-thread channel', async () => {
+    const client = mockClient();
+    (client.channels.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      isThread: () => false,
+    });
+
+    const result = await handleToolCall(client, 'archive_thread', { thread_id: 't1' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not a thread');
+  });
+
+  // ── unarchive_thread ────────────────────────────────────────────────────
+
+  it('unarchive_thread requires thread_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'unarchive_thread', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('thread_id');
+  });
+
+  // ── join_thread ─────────────────────────────────────────────────────────
+
+  it('join_thread rejects non-thread channel', async () => {
+    const client = mockClient();
+    (client.channels.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      isThread: () => false,
+    });
+
+    const result = await handleToolCall(client, 'join_thread', { thread_id: 't1' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not a thread');
+  });
+
+  // ── delete_thread ───────────────────────────────────────────────────────
+
+  it('delete_thread rejects non-thread channel', async () => {
+    const client = mockClient();
+    (client.channels.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      isThread: () => false,
+    });
+
+    const result = await handleToolCall(client, 'delete_thread', { thread_id: 't1' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not a thread');
+  });
+
   // ── Error wrapping ──────────────────────────────────────────────────────
 
   it('wraps thrown errors in isError response', async () => {

@@ -428,6 +428,189 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ['guild_id', 'user_id', 'role_id'],
       },
     },
+    // ── Moderation ──
+    {
+      name: 'kick_member',
+      description: 'Kick a member from the server',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          guild_id: { type: 'string' },
+          user_id: { type: 'string' },
+          reason: { type: 'string', description: 'Audit log reason (optional)' },
+        },
+        required: ['guild_id', 'user_id'],
+      },
+    },
+    {
+      name: 'ban_member',
+      description: 'Ban a user from the server',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          guild_id: { type: 'string' },
+          user_id: { type: 'string' },
+          reason: { type: 'string', description: 'Audit log reason (optional)' },
+          delete_message_days: { type: 'number', description: 'Days of messages to delete (0–7, optional)' },
+        },
+        required: ['guild_id', 'user_id'],
+      },
+    },
+    {
+      name: 'unban_member',
+      description: 'Unban a user from the server',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          guild_id: { type: 'string' },
+          user_id: { type: 'string' },
+          reason: { type: 'string', description: 'Audit log reason (optional)' },
+        },
+        required: ['guild_id', 'user_id'],
+      },
+    },
+    {
+      name: 'timeout_member',
+      description: 'Timeout (mute) a member for a specified duration',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          guild_id: { type: 'string' },
+          user_id: { type: 'string' },
+          duration_minutes: { type: 'number', description: 'Timeout duration in minutes (default 5)' },
+          reason: { type: 'string', description: 'Audit log reason (optional)' },
+        },
+        required: ['guild_id', 'user_id'],
+      },
+    },
+    {
+      name: 'set_nickname',
+      description: 'Set or reset a member\'s nickname',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          guild_id: { type: 'string' },
+          user_id: { type: 'string' },
+          nickname: { type: 'string', description: 'New nickname (empty or null to reset)' },
+          reason: { type: 'string', description: 'Audit log reason (optional)' },
+        },
+        required: ['guild_id', 'user_id'],
+      },
+    },
+    // ── Role CRUD ──
+    {
+      name: 'create_role',
+      description: 'Create a new role in the server',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          guild_id: { type: 'string' },
+          name: { type: 'string', description: 'Role name' },
+          color: { type: 'string', description: 'Hex color (e.g. "#FF0000", optional)' },
+          mentionable: { type: 'boolean', description: 'Whether the role is mentionable (default false)' },
+          reason: { type: 'string', description: 'Audit log reason (optional)' },
+        },
+        required: ['guild_id', 'name'],
+      },
+    },
+    {
+      name: 'edit_role',
+      description: 'Edit an existing role\'s name or color',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          guild_id: { type: 'string' },
+          role_id: { type: 'string' },
+          name: { type: 'string', description: 'New role name (optional)' },
+          color: { type: 'string', description: 'New hex color (optional)' },
+          reason: { type: 'string', description: 'Audit log reason (optional)' },
+        },
+        required: ['guild_id', 'role_id'],
+      },
+    },
+    {
+      name: 'delete_role',
+      description: 'Delete a role from the server',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          guild_id: { type: 'string' },
+          role_id: { type: 'string' },
+          reason: { type: 'string', description: 'Audit log reason (optional)' },
+        },
+        required: ['guild_id', 'role_id'],
+      },
+    },
+    // ── Threads ──
+    {
+      name: 'create_thread',
+      description: 'Create a new thread in a text channel',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          name: { type: 'string', description: 'Thread name' },
+          message_id: { type: 'string', description: 'Message ID to start thread from (optional)' },
+        },
+        required: ['channel_id', 'name'],
+      },
+    },
+    {
+      name: 'list_threads',
+      description: 'List active and archived threads in a channel',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+        },
+        required: ['channel_id'],
+      },
+    },
+    {
+      name: 'archive_thread',
+      description: 'Archive a thread, optionally locking it',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          thread_id: { type: 'string' },
+          locked: { type: 'boolean', description: 'Also lock the thread (default false)' },
+        },
+        required: ['thread_id'],
+      },
+    },
+    {
+      name: 'unarchive_thread',
+      description: 'Unarchive a thread',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          thread_id: { type: 'string' },
+        },
+        required: ['thread_id'],
+      },
+    },
+    {
+      name: 'join_thread',
+      description: 'Make the bot join a thread',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          thread_id: { type: 'string' },
+        },
+        required: ['thread_id'],
+      },
+    },
+    {
+      name: 'delete_thread',
+      description: 'Delete a thread',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          thread_id: { type: 'string' },
+        },
+        required: ['thread_id'],
+      },
+    },
   ],
 }));
 

@@ -19,7 +19,9 @@ Once connected, your AI assistant can:
 - **Forum Channels** — list forums, create/read/reply/delete forum posts
 - **Webhooks** — create, send via, edit, and delete webhooks
 - **Members** — list members, view profiles, check roles
-- **Roles** — list, assign, and remove roles
+- **Roles** — list, create, edit, delete, assign, and remove roles
+- **Moderation** — kick, ban, unban, timeout members, set nicknames
+- **Threads** — create, list, archive, unarchive, join, and delete threads
 - **Server** — list all servers the bot is in, view channel layouts
 
 It also runs as a **standalone Discord bot** with `/ping`, `/info`, and `/serverinfo` slash commands.
@@ -39,7 +41,7 @@ It also runs as a **standalone Discord bot** with `/ping`, `/info`, and `/server
 
 1. In the Developer Portal, go to **OAuth2 > URL Generator**
 2. Check these scopes: `bot`, `applications.commands`
-3. Check these permissions: `Send Messages`, `Read Message History`, `Manage Channels`, `Manage Roles`, `Manage Webhooks`
+3. Check these permissions: `Send Messages`, `Read Message History`, `Manage Channels`, `Manage Roles`, `Manage Webhooks`, `Kick Members`, `Ban Members`, `Moderate Members`, `Manage Nicknames`
 4. Open the generated URL — select your server — authorize
 
 ### Step 3: Set Up the Project
@@ -101,7 +103,7 @@ Restart your AI app. You should now see Discord tools available. Try asking:
 
 ---
 
-## All Available Tools (32)
+## All Available Tools (46)
 
 | Tool | What It Does |
 |------|-------------|
@@ -142,6 +144,22 @@ Restart your AI app. You should now see Discord tools available. Try asking:
 | `list_roles` | List all roles in a server |
 | `assign_role` | Give a role to a member |
 | `remove_role` | Take a role from a member |
+| `create_role` | Create a new role with name, color, mentionable |
+| `edit_role` | Edit a role's name or color |
+| `delete_role` | Delete a role from the server |
+| **Moderation** | |
+| `kick_member` | Kick a member from the server |
+| `ban_member` | Ban a user (with optional message cleanup) |
+| `unban_member` | Unban a previously banned user |
+| `timeout_member` | Timeout (mute) a member for a duration |
+| `set_nickname` | Set or reset a member's nickname |
+| **Threads** | |
+| `create_thread` | Create a thread in a text channel |
+| `list_threads` | List active and archived threads |
+| `archive_thread` | Archive a thread (optionally lock it) |
+| `unarchive_thread` | Unarchive a thread |
+| `join_thread` | Make the bot join a thread |
+| `delete_thread` | Delete a thread |
 
 ---
 
@@ -181,7 +199,7 @@ docker-compose logs -f     # View logs
 ```bash
 npm run typecheck    # Type check
 npm run lint         # Lint
-npm run test         # Run tests (39 tests)
+npm run test         # Run tests (53 tests)
 npm run format       # Format code
 ```
 

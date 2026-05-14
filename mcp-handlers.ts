@@ -571,6 +571,196 @@ const deleteWebhook: ToolHandler = async (client, args) => {
   return ok(`Deleted webhook "${webhook.name}" (ID: ${webhookId})`);
 };
 
+// ── Moderation ──────────────────────────────────────────────────────────────
+
+const kickMember: ToolHandler = async (client, args) => {
+  const guildId = requireString(args, 'guild_id');
+  const userId = requireString(args, 'user_id');
+  const reason = optionalString(args, 'reason');
+  const guild = await client.guilds.fetch(guildId);
+  requireBotPermissions(guild, [PermissionsBitField.Flags.KickMembers], 'kick member');
+  const member = await guild.members.fetch(userId);
+  await member.kick(reason);
+  return ok(`Kicked ${member.user.username} from ${guild.name}`);
+};
+
+const banMember: ToolHandler = async (client, args) => {
+  const guildId = requireString(args, 'guild_id');
+  const userId = requireString(args, 'user_id');
+  const reason = optionalString(args, 'reason');
+  const deleteMessageDays = optionalNumber(args, 'delete_message_days');
+  const guild = await client.guilds.fetch(guildId);
+  requireBotPermissions(guild, [PermissionsBitField.Flags.BanMembers], 'ban member');
+  await guild.members.ban(userId, {
+    reason,
+    ...(deleteMessageDays !== undefined && { deleteMessageSeconds: deleteMessageDays * 86400 }),
+  });
+  return ok(`Banned user ${userId} from ${guild.name}`);
+};
+
+const unbanMember: ToolHandler = async (client, args) => {
+  const guildId = requireString(args, 'guild_id');
+  const userId = requireString(args, 'user_id');
+  const reason = optionalString(args, 'reason');
+  const guild = await client.guilds.fetch(guildId);
+  requireBotPermissions(guild, [PermissionsBitField.Flags.BanMembers], 'unban member');
+  await guild.members.unban(userId, reason);
+  return ok(`Unbanned user ${userId} from ${guild.name}`);
+};
+
+const timeoutMember: ToolHandler = async (client, args) => {
+  const guildId = requireString(args, 'guild_id');
+  const userId = requireString(args, 'user_id');
+  const durationMinutes = optionalNumber(args, 'duration_minutes') ?? 5;
+  const reason = optionalString(args, 'reason');
+  const guild = await client.guilds.fetch(guildId);
+  requireBotPermissions(guild, [PermissionsBitField.Flags.ModerateMembers], 'timeout member');
+  const member = await guild.members.fetch(userId);
+  const ms = durationMinutes * 60 * 1000;
+  await member.timeout(ms, reason);
+  return ok(`Timed out ${member.user.username} for ${durationMinutes} minutes`);
+};
+
+const setNickname: ToolHandler = async (client, args) => {
+  const guildId = requireString(args, 'guild_id');
+  const userId = requireString(args, 'user_id');
+  const nickname = args['nickname'] === null || args['nickname'] === '' ? null : optionalString(args, 'nickname') ?? null;
+  const reason = optionalString(args, 'reason');
+  const guild = await client.guilds.fetch(guildId);
+  requireBotPermissions(guild, [PermissionsBitField.Flags.ManageNicknames], 'set nickname');
+  const member = await guild.members.fetch(userId);
+  await member.setNickname(nickname, reason);
+  return ok(`Set nickname of ${member.user.username} to ${nickname ?? '(reset)'}`);
+};
+
+// ── Role CRUD ───────────────────────────────────────────────────────────────
+
+const createRole: ToolHandler = async (client, args) => {
+  const guildId = requireString(args, 'guild_id');
+  const name = requireString(args, 'name');
+  const color = optionalString(args, 'color');
+  const mentionable = args['mentionable'] === true;
+  const reason = optionalString(args, 'reason');
+  const guild = await client.guilds.fetch(guildId);
+  requireBotPermissions(guild, [PermissionsBitField.Flags.ManageRoles], 'create role');
+  const role = await guild.roles.create({
+    name,
+    ...(color && { color: color as `#${string}` }),
+    mentionable,
+    reason,
+  });
+  return ok(`Created role "${role.name}" (ID: ${role.id}, color: ${role.hexColor})`);
+};
+
+const editRole: ToolHandler = async (client, args) => {
+  const guildId = requireString(args, 'guild_id');
+  const roleId = requireString(args, 'role_id');
+  const name = optionalString(args, 'name');
+  const color = optionalString(args, 'color');
+  const reason = optionalString(args, 'reason');
+  const guild = await client.guilds.fetch(guildId);
+  requireBotPermissions(guild, [PermissionsBitField.Flags.ManageRoles], 'edit role');
+  const role = await guild.roles.fetch(roleId);
+  if (!role) throw new Error(`Role with ID "${roleId}" not found.`);
+  await role.edit({
+    ...(name && { name }),
+    ...(color && { color: color as `#${string}` }),
+    reason,
+  });
+  return ok(`Updated role "${role.name}" (ID: ${role.id})`);
+};
+
+const deleteRole: ToolHandler = async (client, args) => {
+  const guildId = requireString(args, 'guild_id');
+  const roleId = requireString(args, 'role_id');
+  const reason = optionalString(args, 'reason');
+  const guild = await client.guilds.fetch(guildId);
+  requireBotPermissions(guild, [PermissionsBitField.Flags.ManageRoles], 'delete role');
+  const role = await guild.roles.fetch(roleId);
+  if (!role) throw new Error(`Role with ID "${roleId}" not found.`);
+  const roleName = role.name;
+  await role.delete(reason);
+  return ok(`Deleted role "${roleName}" (ID: ${roleId})`);
+};
+
+// ── Thread management ───────────────────────────────────────────────────────
+
+const createThread: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const name = requireString(args, 'name');
+  const messageId = optionalString(args, 'message_id');
+  const ch = await fetchGuildChannel(client, channelId);
+  const textCh = asTextChannel(ch);
+  const thread = messageId
+    ? await textCh.threads.create({ name, startMessage: messageId })
+    : await textCh.threads.create({ name });
+  return ok(`Created thread "${thread.name}" (ID: ${thread.id})`);
+};
+
+const listThreads: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const ch = await fetchGuildChannel(client, channelId);
+  const textCh = asTextChannel(ch);
+  const active = await textCh.threads.fetchActive();
+  const archived = await textCh.threads.fetchArchived();
+  const allThreads = [
+    ...[...active.threads.values()].map((t) => ({
+      id: t.id, name: t.name, archived: false, locked: t.locked, messageCount: t.messageCount,
+    })),
+    ...[...archived.threads.values()].map((t) => ({
+      id: t.id, name: t.name, archived: true, locked: t.locked, messageCount: t.messageCount,
+    })),
+  ];
+  return ok(JSON.stringify(allThreads, null, 2));
+};
+
+const archiveThread: ToolHandler = async (client, args) => {
+  const threadId = requireString(args, 'thread_id');
+  const locked = args['locked'] === true;
+  const thread = await client.channels.fetch(threadId);
+  if (!thread || !thread.isThread()) {
+    throw new Error(`Channel "${threadId}" is not a thread.`);
+  }
+  const threadCh = thread as ThreadChannel;
+  await threadCh.setArchived(true);
+  if (locked) await threadCh.setLocked(true);
+  return ok(`Archived thread "${threadCh.name}"${locked ? ' (locked)' : ''}`);
+};
+
+const unarchiveThread: ToolHandler = async (client, args) => {
+  const threadId = requireString(args, 'thread_id');
+  const thread = await client.channels.fetch(threadId);
+  if (!thread || !thread.isThread()) {
+    throw new Error(`Channel "${threadId}" is not a thread.`);
+  }
+  const threadCh = thread as ThreadChannel;
+  await threadCh.setArchived(false);
+  return ok(`Unarchived thread "${threadCh.name}"`);
+};
+
+const joinThread: ToolHandler = async (client, args) => {
+  const threadId = requireString(args, 'thread_id');
+  const thread = await client.channels.fetch(threadId);
+  if (!thread || !thread.isThread()) {
+    throw new Error(`Channel "${threadId}" is not a thread.`);
+  }
+  const threadCh = thread as ThreadChannel;
+  await threadCh.join();
+  return ok(`Joined thread "${threadCh.name}"`);
+};
+
+const deleteThread: ToolHandler = async (client, args) => {
+  const threadId = requireString(args, 'thread_id');
+  const thread = await client.channels.fetch(threadId);
+  if (!thread || !thread.isThread()) {
+    throw new Error(`Channel "${threadId}" is not a thread.`);
+  }
+  const threadCh = thread as ThreadChannel;
+  const name = threadCh.name;
+  await threadCh.delete();
+  return ok(`Deleted thread "${name}" (ID: ${threadId})`);
+};
+
 // ─── Tool Registry ───────────────────────────────────────────────────────────
 
 const toolRegistry = new Map<string, ToolHandler>([
@@ -611,6 +801,23 @@ const toolRegistry = new Map<string, ToolHandler>([
   ['list_roles', listRoles],
   ['assign_role', assignRole],
   ['remove_role', removeRole],
+  // Moderation
+  ['kick_member', kickMember],
+  ['ban_member', banMember],
+  ['unban_member', unbanMember],
+  ['timeout_member', timeoutMember],
+  ['set_nickname', setNickname],
+  // Role CRUD
+  ['create_role', createRole],
+  ['edit_role', editRole],
+  ['delete_role', deleteRole],
+  // Thread management
+  ['create_thread', createThread],
+  ['list_threads', listThreads],
+  ['archive_thread', archiveThread],
+  ['unarchive_thread', unarchiveThread],
+  ['join_thread', joinThread],
+  ['delete_thread', deleteThread],
 ]);
 
 // ─── Entry Point ─────────────────────────────────────────────────────────────
