@@ -161,6 +161,168 @@ describe('handleToolCall', () => {
     expect(guild.members.fetch).toHaveBeenCalledWith({ limit: 100 });
   });
 
+  // ── delete_message ───────────────────────────────────────────────────────
+
+  it('delete_message requires channel_id and message_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'delete_message', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('channel_id');
+  });
+
+  // ── edit_message ────────────────────────────────────────────────────────
+
+  it('edit_message rejects content over 2000 chars', async () => {
+    const client = mockClient();
+    const mockTextChannel = {
+      id: 'ch1', name: 'general', guild: mockGuild(),
+      isThread: () => false,
+      messages: { fetch: vi.fn() },
+    };
+    (client.channels.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockTextChannel);
+
+    const result = await handleToolCall(client, 'edit_message', {
+      channel_id: 'ch1', message_id: 'msg1', content: 'x'.repeat(2001),
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('2000 character limit');
+  });
+
+  // ── search_messages ─────────────────────────────────────────────────────
+
+  it('search_messages requires query', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'search_messages', { channel_id: 'ch1' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('query');
+  });
+
+  // ── send_dm ─────────────────────────────────────────────────────────────
+
+  it('send_dm rejects content over 2000 chars', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'send_dm', {
+      user_id: 'u1', content: 'x'.repeat(2001),
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('2000 character limit');
+  });
+
+  it('send_dm requires user_id', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'send_dm', { content: 'hello' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('user_id');
+  });
+
+  // ── add_reaction ────────────────────────────────────────────────────────
+
+  it('add_reaction requires all args', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'add_reaction', { channel_id: 'ch1' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('message_id');
+  });
+
+  // ── add_multiple_reactions ──────────────────────────────────────────────
+
+  it('add_multiple_reactions rejects non-array emojis', async () => {
+    const client = mockClient();
+    const mockTextChannel = {
+      id: 'ch1', name: 'general', guild: mockGuild(),
+      isThread: () => false,
+      messages: { fetch: vi.fn().mockResolvedValue({ react: vi.fn() }) },
+    };
+    (client.channels.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockTextChannel);
+
+    const result = await handleToolCall(client, 'add_multiple_reactions', {
+      channel_id: 'ch1', message_id: 'msg1', emojis: 'not-an-array',
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('non-empty array');
+  });
+
+  it('add_multiple_reactions rejects empty array', async () => {
+    const client = mockClient();
+    const mockTextChannel = {
+      id: 'ch1', name: 'general', guild: mockGuild(),
+      isThread: () => false,
+      messages: { fetch: vi.fn() },
+    };
+    (client.channels.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockTextChannel);
+
+    const result = await handleToolCall(client, 'add_multiple_reactions', {
+      channel_id: 'ch1', message_id: 'msg1', emojis: [],
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('non-empty array');
+  });
+
+  // ── create_forum_post ───────────────────────────────────────────────────
+
+  it('create_forum_post rejects non-forum channel', async () => {
+    const client = mockClient();
+    (client.channels.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      type: 0, // GuildText, not Forum
+    });
+
+    const result = await handleToolCall(client, 'create_forum_post', {
+      channel_id: 'ch1', title: 'Test', content: 'Body',
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not a forum channel');
+  });
+
+  // ── get_forum_post ──────────────────────────────────────────────────────
+
+  it('get_forum_post rejects non-thread channel', async () => {
+    const client = mockClient();
+    (client.channels.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      isThread: () => false,
+    });
+
+    const result = await handleToolCall(client, 'get_forum_post', { thread_id: 't1' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not a thread');
+  });
+
+  // ── reply_to_forum_post ─────────────────────────────────────────────────
+
+  it('reply_to_forum_post rejects content over 2000 chars', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'reply_to_forum_post', {
+      thread_id: 't1', content: 'x'.repeat(2001),
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('2000 character limit');
+  });
+
+  // ── create_webhook ──────────────────────────────────────────────────────
+
+  it('create_webhook requires channel_id and name', async () => {
+    const client = mockClient();
+    const result = await handleToolCall(client, 'create_webhook', {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('channel_id');
+  });
+
+  // ── send_webhook_message ────────────────────────────────────────────────
+
+  it('send_webhook_message rejects content over 2000 chars', async () => {
+    const client = mockClient();
+    const mockTextChannel = {
+      id: 'ch1', name: 'general', guild: mockGuild(),
+      isThread: () => false,
+    };
+    (client.channels.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockTextChannel);
+
+    const result = await handleToolCall(client, 'send_webhook_message', {
+      channel_id: 'ch1', webhook_id: 'wh1', content: 'x'.repeat(2001),
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('2000 character limit');
+  });
+
   // ── Error wrapping ──────────────────────────────────────────────────────
 
   it('wraps thrown errors in isError response', async () => {

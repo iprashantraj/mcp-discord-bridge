@@ -161,6 +161,208 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ['channel_id', 'content'],
       },
     },
+    // ── Message enhancements ──
+    {
+      name: 'delete_message',
+      description: 'Delete a message by channel and message ID',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          message_id: { type: 'string' },
+        },
+        required: ['channel_id', 'message_id'],
+      },
+    },
+    {
+      name: 'edit_message',
+      description: 'Edit a bot message by channel and message ID',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          message_id: { type: 'string' },
+          content: { type: 'string', description: 'New message content (max 2000 chars)' },
+        },
+        required: ['channel_id', 'message_id', 'content'],
+      },
+    },
+    {
+      name: 'search_messages',
+      description: 'Search messages in a channel by keyword',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          query: { type: 'string', description: 'Search keyword' },
+          limit: { type: 'number', description: 'Max results to return (1–100, default 50)' },
+        },
+        required: ['channel_id', 'query'],
+      },
+    },
+    {
+      name: 'send_dm',
+      description: 'Send a direct message to a user',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          user_id: { type: 'string' },
+          content: { type: 'string', description: 'Message content (max 2000 chars)' },
+        },
+        required: ['user_id', 'content'],
+      },
+    },
+    {
+      name: 'add_reaction',
+      description: 'Add an emoji reaction to a message',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          message_id: { type: 'string' },
+          emoji: { type: 'string', description: 'Emoji to react with (unicode or custom format)' },
+        },
+        required: ['channel_id', 'message_id', 'emoji'],
+      },
+    },
+    {
+      name: 'remove_reaction',
+      description: 'Remove the bot\'s emoji reaction from a message',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          message_id: { type: 'string' },
+          emoji: { type: 'string', description: 'Emoji to remove' },
+        },
+        required: ['channel_id', 'message_id', 'emoji'],
+      },
+    },
+    {
+      name: 'add_multiple_reactions',
+      description: 'Add multiple emoji reactions to a message at once',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          message_id: { type: 'string' },
+          emojis: { type: 'array', items: { type: 'string' }, description: 'Array of emojis to react with' },
+        },
+        required: ['channel_id', 'message_id', 'emojis'],
+      },
+    },
+    // ── Forum channels ──
+    {
+      name: 'list_forum_channels',
+      description: 'List all forum channels in a server',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          guild_id: { type: 'string' },
+        },
+        required: ['guild_id'],
+      },
+    },
+    {
+      name: 'create_forum_post',
+      description: 'Create a new forum post with title and content',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string', description: 'Forum channel ID' },
+          title: { type: 'string', description: 'Post title' },
+          content: { type: 'string', description: 'Post body content' },
+        },
+        required: ['channel_id', 'title', 'content'],
+      },
+    },
+    {
+      name: 'get_forum_post',
+      description: 'Fetch a forum post and its messages',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          thread_id: { type: 'string', description: 'Forum post (thread) ID' },
+          limit: { type: 'number', description: 'Number of messages to fetch (1–100, default 50)' },
+        },
+        required: ['thread_id'],
+      },
+    },
+    {
+      name: 'reply_to_forum_post',
+      description: 'Reply to an existing forum post',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          thread_id: { type: 'string', description: 'Forum post (thread) ID' },
+          content: { type: 'string', description: 'Reply content (max 2000 chars)' },
+        },
+        required: ['thread_id', 'content'],
+      },
+    },
+    {
+      name: 'delete_forum_post',
+      description: 'Delete a forum post',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          thread_id: { type: 'string', description: 'Forum post (thread) ID' },
+        },
+        required: ['thread_id'],
+      },
+    },
+    // ── Webhooks ──
+    {
+      name: 'create_webhook',
+      description: 'Create a webhook for a channel',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          name: { type: 'string', description: 'Webhook name' },
+        },
+        required: ['channel_id', 'name'],
+      },
+    },
+    {
+      name: 'send_webhook_message',
+      description: 'Send a message via a webhook',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          webhook_id: { type: 'string' },
+          content: { type: 'string', description: 'Message content (max 2000 chars)' },
+          username: { type: 'string', description: 'Override the webhook display name (optional)' },
+        },
+        required: ['channel_id', 'webhook_id', 'content'],
+      },
+    },
+    {
+      name: 'edit_webhook',
+      description: 'Edit an existing webhook',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          webhook_id: { type: 'string' },
+          name: { type: 'string', description: 'New webhook name' },
+        },
+        required: ['channel_id', 'webhook_id'],
+      },
+    },
+    {
+      name: 'delete_webhook',
+      description: 'Delete a webhook',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          channel_id: { type: 'string' },
+          webhook_id: { type: 'string' },
+        },
+        required: ['channel_id', 'webhook_id'],
+      },
+    },
     // ── Members ──
     {
       name: 'list_members',

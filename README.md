@@ -15,7 +15,9 @@ Control your Discord server using AI. Works with **any MCP-compatible app** — 
 Once connected, your AI assistant can:
 
 - **Channels** — create, delete, rename, move channels and categories
-- **Messages** — read and send messages in any text channel
+- **Messages** — read, send, edit, delete, search messages, send DMs, add/remove reactions
+- **Forum Channels** — list forums, create/read/reply/delete forum posts
+- **Webhooks** — create, send via, edit, and delete webhooks
 - **Members** — list members, view profiles, check roles
 - **Roles** — list, assign, and remove roles
 - **Server** — list all servers the bot is in, view channel layouts
@@ -37,7 +39,7 @@ It also runs as a **standalone Discord bot** with `/ping`, `/info`, and `/server
 
 1. In the Developer Portal, go to **OAuth2 > URL Generator**
 2. Check these scopes: `bot`, `applications.commands`
-3. Check these permissions: `Send Messages`, `Read Message History`, `Manage Channels`, `Manage Roles`
+3. Check these permissions: `Send Messages`, `Read Message History`, `Manage Channels`, `Manage Roles`, `Manage Webhooks`
 4. Open the generated URL — select your server — authorize
 
 ### Step 3: Set Up the Project
@@ -99,21 +101,44 @@ Restart your AI app. You should now see Discord tools available. Try asking:
 
 ---
 
-## All Available Tools
+## All Available Tools (32)
 
 | Tool | What It Does |
 |------|-------------|
+| **Server** | |
 | `list_guilds` | List all servers the bot is in |
 | `list_channels` | List all channels and categories |
+| **Channels** | |
 | `create_category` | Create a new category |
 | `create_channel` | Create a text or voice channel |
 | `delete_channel` | Delete a channel or category |
 | `move_channel` | Move a channel to a different category |
 | `rename_channel` | Rename a channel or category |
+| **Messages** | |
 | `get_channel_messages` | Fetch recent messages (up to 100) |
 | `send_message` | Send a message to a channel |
+| `delete_message` | Delete a message |
+| `edit_message` | Edit a bot message |
+| `search_messages` | Search messages by keyword |
+| `send_dm` | Send a direct message to a user |
+| `add_reaction` | Add an emoji reaction to a message |
+| `remove_reaction` | Remove the bot's reaction from a message |
+| `add_multiple_reactions` | Add multiple reactions at once |
+| **Forum Channels** | |
+| `list_forum_channels` | List all forum channels in a server |
+| `create_forum_post` | Create a new forum post |
+| `get_forum_post` | Fetch a forum post and its messages |
+| `reply_to_forum_post` | Reply to a forum post |
+| `delete_forum_post` | Delete a forum post |
+| **Webhooks** | |
+| `create_webhook` | Create a webhook for a channel |
+| `send_webhook_message` | Send a message via webhook |
+| `edit_webhook` | Edit a webhook |
+| `delete_webhook` | Delete a webhook |
+| **Members** | |
 | `list_members` | List server members with roles |
 | `get_member` | Get detailed info about a member |
+| **Roles** | |
 | `list_roles` | List all roles in a server |
 | `assign_role` | Give a role to a member |
 | `remove_role` | Take a role from a member |
@@ -156,7 +181,7 @@ docker-compose logs -f     # View logs
 ```bash
 npm run typecheck    # Type check
 npm run lint         # Lint
-npm run test         # Run tests (26 tests)
+npm run test         # Run tests (39 tests)
 npm run format       # Format code
 ```
 

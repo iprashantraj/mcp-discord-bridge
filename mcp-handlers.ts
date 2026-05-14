@@ -4,12 +4,14 @@ import {
   TextChannel,
   VoiceChannel,
   CategoryChannel,
+  ForumChannel,
   GuildBasedChannel,
   Collection,
   Role,
   GuildMember,
   PermissionsBitField,
   Guild,
+  ThreadChannel,
 } from 'discord.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -319,6 +321,256 @@ const removeRole: ToolHandler = async (client, args) => {
   return ok(`Removed role "${role.name}" from ${member.user.username}`);
 };
 
+// ── Message enhancements ────────────────────────────────────────────────────
+
+const deleteMessage: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const messageId = requireString(args, 'message_id');
+  const ch = await fetchGuildChannel(client, channelId);
+  const textCh = asTextChannel(ch);
+  const message = await textCh.messages.fetch(messageId);
+  await message.delete();
+  return ok(`Deleted message (ID: ${messageId}) from channel ${channelId}`);
+};
+
+const editMessage: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const messageId = requireString(args, 'message_id');
+  const content = requireString(args, 'content');
+  if (content.length > 2000) {
+    throw new Error('Message content exceeds Discord\'s 2000 character limit.');
+  }
+  const ch = await fetchGuildChannel(client, channelId);
+  const textCh = asTextChannel(ch);
+  const message = await textCh.messages.fetch(messageId);
+  if (message.author.id !== client.user?.id) {
+    throw new Error('Can only edit messages sent by the bot.');
+  }
+  await message.edit(content);
+  return ok(`Edited message (ID: ${messageId})`);
+};
+
+const searchMessages: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const query = requireString(args, 'query').toLowerCase();
+  const rawLimit = optionalNumber(args, 'limit');
+  const limit = Math.min(Math.max(rawLimit ?? 50, 1), 100);
+  const ch = await fetchGuildChannel(client, channelId);
+  const textCh = asTextChannel(ch);
+  const messages = await textCh.messages.fetch({ limit: 100 });
+  const matches = [...messages.values()]
+    .filter((m) => m.content.toLowerCase().includes(query))
+    .slice(0, limit)
+    .reverse()
+    .map((m) => ({
+      id: m.id,
+      author: m.author.username,
+      content: m.content,
+      timestamp: m.createdAt.toISOString(),
+    }));
+  return ok(JSON.stringify(matches, null, 2));
+};
+
+const sendDm: ToolHandler = async (client, args) => {
+  const userId = requireString(args, 'user_id');
+  const content = requireString(args, 'content');
+  if (content.length > 2000) {
+    throw new Error('Message content exceeds Discord\'s 2000 character limit.');
+  }
+  const user = await client.users.fetch(userId);
+  const sent = await user.send(content);
+  return ok(`DM sent (ID: ${sent.id}) to user ${user.username}`);
+};
+
+const addReaction: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const messageId = requireString(args, 'message_id');
+  const emoji = requireString(args, 'emoji');
+  const ch = await fetchGuildChannel(client, channelId);
+  const textCh = asTextChannel(ch);
+  const message = await textCh.messages.fetch(messageId);
+  await message.react(emoji);
+  return ok(`Added reaction ${emoji} to message ${messageId}`);
+};
+
+const removeReaction: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const messageId = requireString(args, 'message_id');
+  const emoji = requireString(args, 'emoji');
+  const ch = await fetchGuildChannel(client, channelId);
+  const textCh = asTextChannel(ch);
+  const message = await textCh.messages.fetch(messageId);
+  const botUser = client.user;
+  if (!botUser) throw new Error('Bot user not available.');
+  await message.reactions.resolve(emoji)?.users.remove(botUser.id);
+  return ok(`Removed reaction ${emoji} from message ${messageId}`);
+};
+
+const addMultipleReactions: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const messageId = requireString(args, 'message_id');
+  const emojis = args['emojis'];
+  if (!Array.isArray(emojis) || emojis.length === 0) {
+    throw new Error('Argument "emojis" must be a non-empty array of strings.');
+  }
+  const ch = await fetchGuildChannel(client, channelId);
+  const textCh = asTextChannel(ch);
+  const message = await textCh.messages.fetch(messageId);
+  for (const emoji of emojis) {
+    if (typeof emoji !== 'string') throw new Error('Each emoji must be a string.');
+    await message.react(emoji);
+  }
+  return ok(`Added ${emojis.length} reactions to message ${messageId}`);
+};
+
+// ── Forum channels ──────────────────────────────────────────────────────────
+
+const listForumChannels: ToolHandler = async (client, args) => {
+  const guildId = requireString(args, 'guild_id');
+  const guild = await client.guilds.fetch(guildId);
+  const channels = await guild.channels.fetch();
+  const forums = [...channels.values()]
+    .filter((ch): ch is ForumChannel => ch !== null && ch.type === ChannelType.GuildForum)
+    .map((f) => ({
+      id: f.id,
+      name: f.name,
+      topic: f.topic,
+      parentId: f.parentId,
+      threadCount: f.threads.cache.size,
+    }));
+  return ok(JSON.stringify(forums, null, 2));
+};
+
+const createForumPost: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const title = requireString(args, 'title');
+  const content = requireString(args, 'content');
+  const channel = await client.channels.fetch(channelId);
+  if (!channel || channel.type !== ChannelType.GuildForum) {
+    throw new Error(`Channel "${channelId}" is not a forum channel.`);
+  }
+  const forum = channel as ForumChannel;
+  const thread = await forum.threads.create({
+    name: title,
+    message: { content },
+  });
+  return ok(`Created forum post "${thread.name}" (ID: ${thread.id})`);
+};
+
+const getForumPost: ToolHandler = async (client, args) => {
+  const threadId = requireString(args, 'thread_id');
+  const rawLimit = optionalNumber(args, 'limit');
+  const limit = Math.min(Math.max(rawLimit ?? 50, 1), 100);
+  const thread = await client.channels.fetch(threadId);
+  if (!thread || !thread.isThread()) {
+    throw new Error(`Channel "${threadId}" is not a thread/forum post.`);
+  }
+  const threadCh = thread as ThreadChannel;
+  const messages = await threadCh.messages.fetch({ limit });
+  const result = {
+    id: threadCh.id,
+    name: threadCh.name,
+    archived: threadCh.archived,
+    locked: threadCh.locked,
+    messageCount: threadCh.messageCount,
+    messages: [...messages.values()].reverse().map((m) => ({
+      id: m.id,
+      author: m.author.username,
+      content: m.content,
+      timestamp: m.createdAt.toISOString(),
+    })),
+  };
+  return ok(JSON.stringify(result, null, 2));
+};
+
+const replyToForumPost: ToolHandler = async (client, args) => {
+  const threadId = requireString(args, 'thread_id');
+  const content = requireString(args, 'content');
+  if (content.length > 2000) {
+    throw new Error('Message content exceeds Discord\'s 2000 character limit.');
+  }
+  const thread = await client.channels.fetch(threadId);
+  if (!thread || !thread.isThread()) {
+    throw new Error(`Channel "${threadId}" is not a thread/forum post.`);
+  }
+  const threadCh = thread as ThreadChannel;
+  const sent = await threadCh.send(content);
+  return ok(`Replied to forum post "${threadCh.name}" (message ID: ${sent.id})`);
+};
+
+const deleteForumPost: ToolHandler = async (client, args) => {
+  const threadId = requireString(args, 'thread_id');
+  const thread = await client.channels.fetch(threadId);
+  if (!thread || !thread.isThread()) {
+    throw new Error(`Channel "${threadId}" is not a thread/forum post.`);
+  }
+  const threadCh = thread as ThreadChannel;
+  const name = threadCh.name;
+  await threadCh.delete();
+  return ok(`Deleted forum post "${name}" (ID: ${threadId})`);
+};
+
+// ── Webhooks ────────────────────────────────────────────────────────────────
+
+const createWebhook: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const name = requireString(args, 'name');
+  const ch = await fetchGuildChannel(client, channelId);
+  requireBotPermissions(ch.guild, [PermissionsBitField.Flags.ManageWebhooks], 'create webhook');
+  const textCh = asTextChannel(ch);
+  const webhook = await textCh.createWebhook({ name });
+  return ok(JSON.stringify({
+    id: webhook.id,
+    name: webhook.name,
+    url: webhook.url,
+    channelId: webhook.channelId,
+  }, null, 2));
+};
+
+const sendWebhookMessage: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const webhookId = requireString(args, 'webhook_id');
+  const content = requireString(args, 'content');
+  const username = optionalString(args, 'username');
+  if (content.length > 2000) {
+    throw new Error('Message content exceeds Discord\'s 2000 character limit.');
+  }
+  const ch = await fetchGuildChannel(client, channelId);
+  const textCh = asTextChannel(ch);
+  const webhooks = await textCh.fetchWebhooks();
+  const webhook = webhooks.get(webhookId);
+  if (!webhook) throw new Error(`Webhook "${webhookId}" not found in channel.`);
+  await webhook.send({ content, ...(username && { username }) });
+  return ok(`Sent webhook message to channel ${channelId}`);
+};
+
+const editWebhook: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const webhookId = requireString(args, 'webhook_id');
+  const name = optionalString(args, 'name');
+  const ch = await fetchGuildChannel(client, channelId);
+  requireBotPermissions(ch.guild, [PermissionsBitField.Flags.ManageWebhooks], 'edit webhook');
+  const textCh = asTextChannel(ch);
+  const webhooks = await textCh.fetchWebhooks();
+  const webhook = webhooks.get(webhookId);
+  if (!webhook) throw new Error(`Webhook "${webhookId}" not found in channel.`);
+  const updated = await webhook.edit({ ...(name && { name }) });
+  return ok(`Updated webhook "${updated.name}" (ID: ${updated.id})`);
+};
+
+const deleteWebhook: ToolHandler = async (client, args) => {
+  const channelId = requireString(args, 'channel_id');
+  const webhookId = requireString(args, 'webhook_id');
+  const ch = await fetchGuildChannel(client, channelId);
+  requireBotPermissions(ch.guild, [PermissionsBitField.Flags.ManageWebhooks], 'delete webhook');
+  const textCh = asTextChannel(ch);
+  const webhooks = await textCh.fetchWebhooks();
+  const webhook = webhooks.get(webhookId);
+  if (!webhook) throw new Error(`Webhook "${webhookId}" not found in channel.`);
+  await webhook.delete();
+  return ok(`Deleted webhook "${webhook.name}" (ID: ${webhookId})`);
+};
+
 // ─── Tool Registry ───────────────────────────────────────────────────────────
 
 const toolRegistry = new Map<string, ToolHandler>([
@@ -334,6 +586,24 @@ const toolRegistry = new Map<string, ToolHandler>([
   // Messages
   ['get_channel_messages', getChannelMessages],
   ['send_message', sendMessage],
+  ['delete_message', deleteMessage],
+  ['edit_message', editMessage],
+  ['search_messages', searchMessages],
+  ['send_dm', sendDm],
+  ['add_reaction', addReaction],
+  ['remove_reaction', removeReaction],
+  ['add_multiple_reactions', addMultipleReactions],
+  // Forum channels
+  ['list_forum_channels', listForumChannels],
+  ['create_forum_post', createForumPost],
+  ['get_forum_post', getForumPost],
+  ['reply_to_forum_post', replyToForumPost],
+  ['delete_forum_post', deleteForumPost],
+  // Webhooks
+  ['create_webhook', createWebhook],
+  ['send_webhook_message', sendWebhookMessage],
+  ['edit_webhook', editWebhook],
+  ['delete_webhook', deleteWebhook],
   // Members
   ['list_members', listMembers],
   ['get_member', getMember],
