@@ -7,8 +7,4 @@ dist
 *.md
 LICENSE
 CONNECTING.txt
-.leetcode-state.json
-.leetcode-history.json
-leetcode-*.ts
-run-leetcode-*.bat
 .claude
