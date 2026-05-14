@@ -1,12 +1,25 @@
 # Discord MCP Server
 
-Control your Discord server using AI. Works with **any MCP-compatible app** — Claude Desktop, Cursor, Windsurf, Continue.dev, Zed, Claude Code, and more.
+[![npm version](https://img.shields.io/npm/v/mcp-discord-bridge.svg)](https://www.npmjs.com/package/mcp-discord-bridge)
+[![npm downloads](https://img.shields.io/npm/dm/mcp-discord-bridge.svg)](https://www.npmjs.com/package/mcp-discord-bridge)
+[![CI](https://github.com/iprashantraj/mcp-discord-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/iprashantraj/mcp-discord-bridge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+Control your Discord server using AI — **46 tools**, no cloning required. Works with **any MCP-compatible app**: Claude Desktop, Cursor, Windsurf, Continue.dev, Zed, Claude Code, and more.
 
 > **What is MCP?** Model Context Protocol is an open standard that lets AI apps talk to external tools. This project is one of those tools — it gives any AI assistant the power to manage your Discord server.
 
 <p align="center">
   <img src="./assets/demo.svg" alt="Demo showing Discord MCP tools in action" width="820">
 </p>
+
+## Install in one line
+
+```bash
+npx -y mcp-discord-bridge
+```
+
+That's it — no clone, no `npm install`. Just add it to your AI app's MCP config (see [Quick Start](#quick-start-3-minutes) below).
 
 ---
 
