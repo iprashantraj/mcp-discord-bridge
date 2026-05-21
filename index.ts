@@ -7,7 +7,7 @@ import {
   Colors,
   ActivityType,
 } from 'discord.js';
-import { createClient } from './discord-client';
+import { createClient, getConnectionError } from './discord-client';
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 
@@ -19,6 +19,10 @@ interface SlashCommand {
 // ─── Client Setup ─────────────────────────────────────────────────────────────
 
 const client = createClient();
+if (getConnectionError()) {
+  // Standalone bot has no UI surface for errors — exit so the user sees the failure.
+  process.exit(1);
+}
 
 // ─── Commands ─────────────────────────────────────────────────────────────────
 

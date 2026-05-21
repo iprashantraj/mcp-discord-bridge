@@ -6,7 +6,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { GatewayIntentBits } from 'discord.js';
-import { createClient } from './discord-client';
+import { createClient, getConnectionError } from './discord-client';
 import { handleToolCall } from './mcp-handlers';
 
 // ─── Discord Client Setup ─────────────────────────────────────────────────────
@@ -618,6 +618,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 // ─── Tool Handlers ─────────────────────────────────────────────────────────────
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const connErr = getConnectionError();
+  if (connErr) {
+    return { content: [{ type: 'text' as const, text: `Error: ${connErr}` }], isError: true };
+  }
   await waitForDiscord();
   const { name, arguments: rawArgs } = request.params;
   const args = (rawArgs ?? {}) as Record<string, unknown>;

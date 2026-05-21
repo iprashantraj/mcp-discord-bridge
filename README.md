@@ -85,8 +85,6 @@ Add this to your app's MCP config — **no cloning or installing needed**:
 | **Continue.dev** | `~/.continue/config.json` |
 | **Zed** | `~/.config/zed/settings.json` |
 
-> For detailed per-app instructions, see [CONNECTING.md](./CONNECTING.md).
-
 ### Step 4: Done!
 
 Restart your AI app. You should now see Discord tools available. Try asking:
@@ -237,8 +235,7 @@ mcp-discord-bridge/
 ├── deploy-commands.ts    # One-time command registration
 ├── tests/                # Vitest test suite
 ├── .github/workflows/    # CI pipeline
-├── Dockerfile            # Multi-stage Docker build
-└── CONNECTING.md         # Detailed per-app setup guide
+└── Dockerfile            # Multi-stage Docker build
 ```
 
 ---
