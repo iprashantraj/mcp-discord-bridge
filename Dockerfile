@@ -38,5 +38,7 @@ COPY --from=builder /app/tsconfig.json ./
 
 # Expose no ports since MCP uses stdio and the bot uses WebSockets outbound
 
-# Default command: run the standalone bot
-CMD ["npx", "ts-node", "index.ts"]
+# Default command: run the MCP server (stdio) so directory validators
+# (e.g. Glama, Smithery) can introspect tools. To run the standalone
+# bot instead, override with: docker run ... npx ts-node index.ts
+CMD ["npx", "ts-node", "mcp-server.ts"]

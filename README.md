@@ -204,7 +204,7 @@ npm run bot
 
 ## Docker Deployment
 
-Run the bot 24/7 on a server or Raspberry Pi:
+The image defaults to the **MCP server** (stdio). To run the standalone bot 24/7 instead, uncomment the `command: npm run bot` line in `docker-compose.yml`, then:
 
 ```bash
 docker-compose up -d       # Start in background
