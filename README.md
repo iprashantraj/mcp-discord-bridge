@@ -213,12 +213,24 @@ docker-compose logs -f     # View logs
 
 ---
 
+## Architecture
+
+<p align="center">
+  <img src="./assets/architecture.svg" alt="mcp-discord-bridge architecture diagram" width="760">
+</p>
+
+An MCP client talks to **`mcp-server.ts`** over stdio (JSON-RPC). The server advertises tools (with read-only/destructive annotations), then dispatches each call through **`mcp-handlers.ts`** — a 44-tool registry that validates args, checks bot permissions, and enforces read-only mode. Handlers act through the shared client from **`discord-client.ts`**, which owns login and connection state. The standalone bot (**`index.ts`**) is a separate entrypoint that reuses the same client factory.
+
+> Editable source: [`assets/architecture.excalidraw`](./assets/architecture.excalidraw) — open it at [excalidraw.com](https://excalidraw.com).
+
+---
+
 ## Development
 
 ```bash
 npm run typecheck    # Type check
 npm run lint         # Lint
-npm run test         # Run tests (53 tests)
+npm run test         # Run tests (59 tests)
 npm run format       # Format code
 ```
 

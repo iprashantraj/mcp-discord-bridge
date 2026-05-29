@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1150 1010" font-family="ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect x="0" y="0" width="1150" height="1010" fill="#ffffff"/>
+  <text x="40" y="44" font-size="26" font-weight="700" fill="#1e1e1e">mcp-discord-bridge — architecture</text>
+
+  <!-- defs: arrowheads -->
+  <defs>
+    <marker id="ah" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#495057"/>
+    </marker>
+    <marker id="ahO" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#e8590c"/>
+    </marker>
+  </defs>
+
+  <!-- ── arrows (drawn first, under boxes) ── -->
+  <g stroke-width="2" fill="none">
+    <line x1="460" y1="150" x2="460" y2="208" stroke="#1971c2" marker-end="url(#ah)"/>
+    <line x1="460" y1="350" x2="460" y2="418" stroke="#6741d9" marker-end="url(#ah)"/>
+    <line x1="460" y1="560" x2="460" y2="628" stroke="#6741d9" marker-end="url(#ah)"/>
+    <line x1="460" y1="750" x2="460" y2="798" stroke="#099268" marker-end="url(#ah)"/>
+    <line x1="460" y1="866" x2="460" y2="908" stroke="#495057" marker-end="url(#ah)"/>
+    <!-- standalone bot path (dashed) -->
+    <path d="M760,275 C690,300 660,560 620,665" stroke="#e8590c" stroke-dasharray="7 5" marker-end="url(#ahO)"/>
+    <path d="M925,490 C925,650 720,860 600,895" stroke="#e8590c" stroke-dasharray="7 5" marker-end="url(#ahO)"/>
+  </g>
+
+  <!-- arrow labels -->
+  <g font-size="13" fill="#495057" font-style="italic">
+    <text x="470" y="182">stdio · JSON-RPC</text>
+    <text x="470" y="392">handleToolCall(name, args)</text>
+    <text x="470" y="602">uses Client</text>
+    <text x="592" y="788">HTTPS · Gateway WS</text>
+    <text x="628" y="560" fill="#e8590c">shares client factory</text>
+  </g>
+
+  <!-- ── boxes ── -->
+  <!-- MCP Client -->
+  <g>
+    <rect x="300" y="60" width="320" height="90" rx="10" fill="#a5d8ff" stroke="#1971c2" stroke-width="2"/>
+    <text x="460" y="98" text-anchor="middle" font-size="16" font-weight="600" fill="#1971c2">MCP Client</text>
+    <text x="460" y="122" text-anchor="middle" font-size="12.5" fill="#1864ab">Claude Desktop · Cursor · Windsurf</text>
+    <text x="460" y="139" text-anchor="middle" font-size="12.5" fill="#1864ab">Zed · Continue.dev · Claude Code</text>
+  </g>
+
+  <!-- mcp-server.ts -->
+  <g>
+    <rect x="280" y="210" width="360" height="140" rx="10" fill="#d0bfff" stroke="#6741d9" stroke-width="2"/>
+    <text x="460" y="240" text-anchor="middle" font-size="16" font-weight="700" fill="#5f3dc4">mcp-server.ts</text>
+    <text x="300" y="268" font-size="13" fill="#412a8c">• StdioServerTransport</text>
+    <text x="300" y="289" font-size="13" fill="#412a8c">• ListTools  (+ annotations, read-only filter)</text>
+    <text x="300" y="310" font-size="13" fill="#412a8c">• CallTool dispatch</text>
+    <text x="300" y="331" font-size="13" fill="#412a8c">• waitForDiscord · SIGINT/SIGTERM</text>
+  </g>
+
+  <!-- mcp-handlers.ts -->
+  <g>
+    <rect x="280" y="420" width="360" height="140" rx="10" fill="#d0bfff" stroke="#6741d9" stroke-width="2"/>
+    <text x="460" y="450" text-anchor="middle" font-size="16" font-weight="700" fill="#5f3dc4">mcp-handlers.ts</text>
+    <text x="300" y="478" font-size="13" fill="#412a8c">• 44-tool registry (Map)</text>
+    <text x="300" y="499" font-size="13" fill="#412a8c">• requireString · limit clamping</text>
+    <text x="300" y="520" font-size="13" fill="#412a8c">• requireBotPermissions</text>
+    <text x="300" y="541" font-size="13" fill="#412a8c">• read-only gate (DISCORD_READONLY)</text>
+  </g>
+
+  <!-- discord-client.ts -->
+  <g>
+    <rect x="300" y="630" width="320" height="120" rx="10" fill="#96f2d7" stroke="#099268" stroke-width="2"/>
+    <text x="460" y="660" text-anchor="middle" font-size="16" font-weight="700" fill="#087f5b">discord-client.ts</text>
+    <text x="320" y="688" font-size="13" fill="#066649">• createClient(intents)</text>
+    <text x="320" y="709" font-size="13" fill="#066649">• login + connectionError state</text>
+    <text x="320" y="730" font-size="13" fill="#066649">• getConnectionError()</text>
+  </g>
+
+  <!-- discord.js -->
+  <g>
+    <rect x="340" y="800" width="240" height="56" rx="10" fill="#e9ecef" stroke="#495057" stroke-width="2"/>
+    <text x="460" y="834" text-anchor="middle" font-size="15" font-weight="600" fill="#343a40">discord.js (v14)</text>
+  </g>
+
+  <!-- Discord API -->
+  <g>
+    <rect x="340" y="910" width="240" height="56" rx="10" fill="#bac8ff" stroke="#3b5bdb" stroke-width="2"/>
+    <text x="460" y="944" text-anchor="middle" font-size="15" font-weight="700" fill="#364fc7">Discord API</text>
+  </g>
+
+  <!-- index.ts (standalone bot) -->
+  <g>
+    <rect x="760" y="210" width="330" height="130" rx="10" fill="#ffec99" stroke="#e8590c" stroke-width="2"/>
+    <text x="925" y="240" text-anchor="middle" font-size="15" font-weight="700" fill="#d9480f">index.ts  ·  standalone bot</text>
+    <text x="780" y="268" font-size="13" fill="#b34700">• /ping · /info · /serverinfo</text>
+    <text x="780" y="289" font-size="13" fill="#b34700">• slash-command handlers</text>
+    <text x="780" y="310" font-size="13" fill="#b34700">• shares createClient()</text>
+    <text x="780" y="331" font-size="12.5" fill="#b34700" font-style="italic">(separate entrypoint from MCP)</text>
+  </g>
+
+  <!-- deploy-commands.ts -->
+  <g>
+    <rect x="760" y="420" width="330" height="72" rx="10" fill="#ffec99" stroke="#e8590c" stroke-width="2"/>
+    <text x="925" y="450" text-anchor="middle" font-size="15" font-weight="700" fill="#d9480f">deploy-commands.ts</text>
+    <text x="925" y="474" text-anchor="middle" font-size="12.5" fill="#b34700">one-time slash-command registration</text>
+  </g>
+</svg>
