@@ -12,4 +12,4 @@ services:
       retries: 3
     # The image defaults to the MCP server (stdio). To run the
     # standalone bot (slash commands) 24/7 instead, uncomment:
-    # command: npm run bot
+    # command: ["node", "dist/index.js"]

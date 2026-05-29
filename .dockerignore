@@ -6,5 +6,5 @@ dist
 .prettierrc
 *.md
 LICENSE
-CONNECTING.txt
 .claude
+tests

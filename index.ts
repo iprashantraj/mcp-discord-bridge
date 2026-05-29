@@ -6,6 +6,7 @@ import {
   EmbedBuilder,
   Colors,
   ActivityType,
+  MessageFlags,
 } from 'discord.js';
 import { createClient, getConnectionError } from './discord-client';
 
@@ -31,8 +32,9 @@ const commands = new Collection<string, SlashCommand>();
 const pingCommand: SlashCommand = {
   data: new SlashCommandBuilder().setName('ping').setDescription('Check bot latency'),
   async execute(interaction) {
-    const sent = await interaction.reply({ content: '🏓 Pinging...', fetchReply: true });
-    const latency = sent.createdTimestamp - interaction.createdTimestamp;
+    const before = Date.now();
+    await interaction.reply({ content: '🏓 Pinging...' });
+    const latency = Date.now() - before;
     const wsLatency = interaction.client.ws.ping;
 
     const embed = new EmbedBuilder()
@@ -98,7 +100,10 @@ const serverinfoCommand: SlashCommand = {
   async execute(interaction) {
     const guild = interaction.guild;
     if (!guild) {
-      await interaction.reply({ content: '❌ This command can only be used in a server.', ephemeral: true });
+      await interaction.reply({
+        content: '❌ This command can only be used in a server.',
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -132,7 +137,7 @@ commands.set(serverinfoCommand.data.name, serverinfoCommand);
 
 // ─── Event Handlers ────────────────────────────────────────────────────────────
 
-client.once('ready', (readyClient) => {
+client.once('clientReady', (readyClient) => {
   console.log(`✅ Logged in as ${readyClient.user.tag}`);
   readyClient.user.setActivity('MCP Bridge | /info', { type: ActivityType.Watching });
 });
@@ -142,7 +147,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
 
   const command = commands.get(interaction.commandName);
   if (!command) {
-    await interaction.reply({ content: '❌ Unknown command.', ephemeral: true });
+    await interaction.reply({ content: '❌ Unknown command.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -150,13 +155,23 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     await command.execute(interaction);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'An unknown error occurred.';
-    const reply = { content: `❌ Error: ${message}`, ephemeral: true };
+    const content = `❌ Error: ${message}`;
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp(reply);
+      await interaction.followUp({ content, flags: MessageFlags.Ephemeral });
     } else {
-      await interaction.reply(reply);
+      await interaction.reply({ content, flags: MessageFlags.Ephemeral });
     }
   }
 });
+
+// ─── Graceful Shutdown ──────────────────────────────────────────────────────────
+
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(signal, () => {
+    console.log(`Received ${signal}, shutting down…`);
+    void client.destroy();
+    process.exit(0);
+  });
+}
 
 // Client is already logged in via createClient()

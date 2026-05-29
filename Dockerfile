@@ -1,44 +1,31 @@
-# Use the official Node.js 20 lightweight Alpine image
+# ───── Builder: install all deps and compile TypeScript → dist/ ─────
 FROM node:20-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files first for better layer caching
-COPY package*.json ./
-COPY tsconfig.json ./
-
-# Install all dependencies (including devDependencies needed for build)
+# Install deps first for better layer caching
+COPY package*.json tsconfig.json ./
 RUN npm ci
 
-# Copy the rest of the source code
-COPY . .
+# Compile
+COPY *.ts ./
+RUN npm run build
 
-# Type-check the project
-RUN npx tsc --noEmit
-
-# ==========================================
-# Production stage
-# ==========================================
+# ───── Production: ship only compiled JS + production deps ─────
 FROM node:20-alpine
 
 WORKDIR /app
+ENV NODE_ENV=production
 
-# Copy package files and install all deps (ts-node needed at runtime)
 COPY package*.json ./
-RUN npm ci && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy source files from builder
-COPY --from=builder /app/index.ts ./
-COPY --from=builder /app/mcp-server.ts ./
-COPY --from=builder /app/mcp-handlers.ts ./
-COPY --from=builder /app/discord-client.ts ./
-COPY --from=builder /app/deploy-commands.ts ./
-COPY --from=builder /app/tsconfig.json ./
+COPY --from=builder /app/dist ./dist
 
-# Expose no ports since MCP uses stdio and the bot uses WebSockets outbound
+# No ports exposed: MCP uses stdio, the bot uses outbound WebSockets only.
 
-# Default command: run the MCP server (stdio) so directory validators
-# (e.g. Glama, Smithery) can introspect tools. To run the standalone
-# bot instead, override with: docker run ... npx ts-node index.ts
-CMD ["npx", "ts-node", "mcp-server.ts"]
+# Default: the MCP server (stdio) — matches the npm package entrypoint and lets
+# directory validators (Glama, Smithery) introspect tools.
+# To run the standalone bot instead, override the command:
+#   docker run ... node dist/index.js
+CMD ["node", "dist/mcp-server.js"]

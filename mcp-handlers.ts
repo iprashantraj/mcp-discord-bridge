@@ -2,6 +2,7 @@ import {
   Client,
   ChannelType,
   TextChannel,
+  NewsChannel,
   VoiceChannel,
   CategoryChannel,
   ForumChannel,
@@ -51,11 +52,15 @@ export function optionalNumber(args: Args, key: string): number | undefined {
   return value;
 }
 
-/** Assert a channel is text-based (can send messages). */
-export function asTextChannel(channel: GuildBasedChannel | null): TextChannel {
+/**
+ * Assert a channel is a standard text or announcement channel (can send messages,
+ * fetch history, hold webhooks, and start threads). Both TextChannel and NewsChannel
+ * support every method used by the message/webhook/thread handlers.
+ */
+export function asTextChannel(channel: GuildBasedChannel | null): TextChannel | NewsChannel {
   if (!channel) throw new Error('Channel not found.');
-  if (!(channel instanceof TextChannel)) throw new Error(`Channel "${channel.name}" is not a text channel.`);
-  return channel;
+  if (channel instanceof TextChannel || channel instanceof NewsChannel) return channel;
+  throw new Error(`Channel "${channel.name}" is not a text or announcement channel.`);
 }
 
 /** Resolve a guild channel with type narrowing. */
@@ -368,7 +373,20 @@ const searchMessages: ToolHandler = async (client, args) => {
       content: m.content,
       timestamp: m.createdAt.toISOString(),
     }));
-  return ok(JSON.stringify(matches, null, 2));
+  // Discord has no server-side text search API for bots, so this only scans the
+  // most recent 100 messages. Surface that explicitly so empty results aren't
+  // mistaken for "no such message ever existed".
+  return ok(
+    JSON.stringify(
+      {
+        note: 'Searched only the 100 most recent messages in this channel.',
+        matchCount: matches.length,
+        matches,
+      },
+      null,
+      2,
+    ),
+  );
 };
 
 const sendDm: ToolHandler = async (client, args) => {
@@ -588,7 +606,10 @@ const banMember: ToolHandler = async (client, args) => {
   const guildId = requireString(args, 'guild_id');
   const userId = requireString(args, 'user_id');
   const reason = optionalString(args, 'reason');
-  const deleteMessageDays = optionalNumber(args, 'delete_message_days');
+  const rawDeleteDays = optionalNumber(args, 'delete_message_days');
+  // Discord only accepts 0–7 days of message deletion; clamp instead of erroring.
+  const deleteMessageDays =
+    rawDeleteDays !== undefined ? Math.min(Math.max(rawDeleteDays, 0), 7) : undefined;
   const guild = await client.guilds.fetch(guildId);
   requireBotPermissions(guild, [PermissionsBitField.Flags.BanMembers], 'ban member');
   await guild.members.ban(userId, {
@@ -611,7 +632,9 @@ const unbanMember: ToolHandler = async (client, args) => {
 const timeoutMember: ToolHandler = async (client, args) => {
   const guildId = requireString(args, 'guild_id');
   const userId = requireString(args, 'user_id');
-  const durationMinutes = optionalNumber(args, 'duration_minutes') ?? 5;
+  // Discord caps timeouts at 28 days (40320 minutes); clamp to a valid range.
+  const rawMinutes = optionalNumber(args, 'duration_minutes') ?? 5;
+  const durationMinutes = Math.min(Math.max(rawMinutes, 1), 40320);
   const reason = optionalString(args, 'reason');
   const guild = await client.guilds.fetch(guildId);
   requireBotPermissions(guild, [PermissionsBitField.Flags.ModerateMembers], 'timeout member');
@@ -820,6 +843,45 @@ const toolRegistry = new Map<string, ToolHandler>([
   ['delete_thread', deleteThread],
 ]);
 
+// ─── Tool Classification ─────────────────────────────────────────────────────
+
+/** Tools that only read state — safe to expose in read-only deployments. */
+export const READ_ONLY_TOOLS = new Set<string>([
+  'list_guilds',
+  'list_channels',
+  'get_channel_messages',
+  'search_messages',
+  'list_forum_channels',
+  'get_forum_post',
+  'list_members',
+  'get_member',
+  'list_roles',
+  'list_threads',
+]);
+
+/** Tools that perform irreversible destructive updates (for destructiveHint). */
+export const DESTRUCTIVE_TOOLS = new Set<string>([
+  'delete_channel',
+  'delete_message',
+  'delete_forum_post',
+  'delete_webhook',
+  'delete_role',
+  'delete_thread',
+  'kick_member',
+  'ban_member',
+  'timeout_member',
+]);
+
+/**
+ * Whether the server is running in read-only mode (DISCORD_READONLY truthy).
+ * Read at call time so tests and runtime config changes are honoured.
+ */
+export function isReadOnlyMode(): boolean {
+  return ['1', 'true', 'yes', 'on'].includes(
+    (process.env.DISCORD_READONLY ?? '').trim().toLowerCase(),
+  );
+}
+
 // ─── Entry Point ─────────────────────────────────────────────────────────────
 
 export async function handleToolCall(
@@ -830,6 +892,12 @@ export async function handleToolCall(
   try {
     const handler = toolRegistry.get(name);
     if (!handler) throw new Error(`Unknown tool: "${name}"`);
+    if (isReadOnlyMode() && !READ_ONLY_TOOLS.has(name)) {
+      throw new Error(
+        `Tool "${name}" is disabled: the server is running in read-only mode ` +
+          `(DISCORD_READONLY is set). Only read-only tools are available.`,
+      );
+    }
     return await handler(client, args);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

@@ -7,7 +7,12 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { GatewayIntentBits } from 'discord.js';
 import { createClient, getConnectionError } from './discord-client';
-import { handleToolCall } from './mcp-handlers';
+import {
+  handleToolCall,
+  isReadOnlyMode,
+  READ_ONLY_TOOLS,
+  DESTRUCTIVE_TOOLS,
+} from './mcp-handlers';
 
 // ─── Discord Client Setup ─────────────────────────────────────────────────────
 
@@ -28,27 +33,36 @@ discordClient.on('error', (err) => {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Wait until Discord is ready, a connection error surfaces, or the login
+// timeout (15s in discord-client) elapses. Polling avoids leaking a
+// 'clientReady' listener on every tool call and keeps the deadline aligned
+// with the login timeout so callers never give up prematurely.
 async function waitForDiscord(): Promise<void> {
-  if (discordReady) return;
-  await Promise.race([
-    new Promise<void>((resolve) => discordClient.once('clientReady', () => resolve())),
-    new Promise<void>((_, reject) =>
-      setTimeout(() => reject(new Error('Discord not ready within 8s — proceeding anyway')), 8000),
-    ),
-  ]).catch(() => {/* timeout: continue and let Discord.js surface any real errors */});
+  const DEADLINE_MS = 16_000;
+  const start = Date.now();
+  while (!discordReady) {
+    if (getConnectionError()) return;
+    if (Date.now() - start > DEADLINE_MS) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
 }
 
 // ─── MCP Server Setup ─────────────────────────────────────────────────────────
 
 const server = new Server(
-  { name: 'discord-mcp-server', version: '1.1.0' },
+  { name: 'discord-mcp-server', version: '1.2.0' },
   { capabilities: { tools: {} } },
 );
 
 // ─── Tool Definitions ─────────────────────────────────────────────────────────
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
+interface ToolDefinition {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+}
+
+const TOOL_DEFINITIONS: ToolDefinition[] = [
     // ── Server ──
     {
       name: 'list_guilds',
@@ -190,7 +204,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'search_messages',
-      description: 'Search messages in a channel by keyword',
+      description:
+        'Search the 100 most recent messages in a channel by keyword (Discord exposes no full-history search to bots)',
       inputSchema: {
         type: 'object',
         properties: {
@@ -612,21 +627,82 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ['thread_id'],
       },
     },
-  ],
+];
+
+// ─── Annotations & Read-Only Filtering ─────────────────────────────────────────
+
+/** Humanize a snake_case tool name into a Title Case display label. */
+function toTitle(name: string): string {
+  return name
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/** Attach MCP annotations (hints) so clients can label and gate tools. */
+function withAnnotations(tool: ToolDefinition): ToolDefinition & {
+  annotations: Record<string, unknown>;
+} {
+  const readOnly = READ_ONLY_TOOLS.has(tool.name);
+  return {
+    ...tool,
+    annotations: {
+      title: toTitle(tool.name),
+      readOnlyHint: readOnly,
+      destructiveHint: readOnly ? false : DESTRUCTIVE_TOOLS.has(tool.name),
+      // Every tool reaches out to the live Discord API.
+      openWorldHint: true,
+    },
+  };
+}
+
+/** The tools advertised to clients, filtered for read-only mode. */
+function listedTools(): ReturnType<typeof withAnnotations>[] {
+  const defs = isReadOnlyMode()
+    ? TOOL_DEFINITIONS.filter((t) => READ_ONLY_TOOLS.has(t.name))
+    : TOOL_DEFINITIONS;
+  return defs.map(withAnnotations);
+}
+
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: listedTools(),
 }));
 
 // ─── Tool Handlers ─────────────────────────────────────────────────────────────
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: rawArgs } = request.params;
+  // Read-only gate first — cheap and avoids waiting on Discord for a tool we'll refuse.
+  // (handleToolCall enforces this too; this is defense in depth.)
+  if (isReadOnlyMode() && !READ_ONLY_TOOLS.has(name)) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error: Tool "${name}" is disabled in read-only mode (DISCORD_READONLY is set).`,
+        },
+      ],
+      isError: true,
+    };
+  }
+  await waitForDiscord();
   const connErr = getConnectionError();
   if (connErr) {
     return { content: [{ type: 'text' as const, text: `Error: ${connErr}` }], isError: true };
   }
-  await waitForDiscord();
-  const { name, arguments: rawArgs } = request.params;
   const args = (rawArgs ?? {}) as Record<string, unknown>;
   return handleToolCall(discordClient, name, args);
 });
+
+// ─── Graceful Shutdown ─────────────────────────────────────────────────────────
+
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(signal, () => {
+    console.error(`Received ${signal}, closing Discord connection…`);
+    void discordClient.destroy();
+    process.exit(0);
+  });
+}
 
 // ─── Start MCP Server ─────────────────────────────────────────────────────────
 

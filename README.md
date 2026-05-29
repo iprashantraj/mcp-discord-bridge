@@ -5,7 +5,7 @@
 [![CI](https://github.com/iprashantraj/mcp-discord-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/iprashantraj/mcp-discord-bridge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-Control your Discord server using AI — **46 tools**, no cloning required. Works with **any MCP-compatible app**: Claude Desktop, Cursor, Windsurf, Continue.dev, Zed, Claude Code, and more.
+Control your Discord server using AI — **44 tools**, no cloning required. Works with **any MCP-compatible app**: Claude Desktop, Cursor, Windsurf, Continue.dev, Zed, Claude Code, and more.
 
 > **What is MCP?** Model Context Protocol is an open standard that lets AI apps talk to external tools. This project is one of those tools — it gives any AI assistant the power to manage your Discord server.
 
@@ -93,7 +93,7 @@ Restart your AI app. You should now see Discord tools available. Try asking:
 
 ---
 
-## All Available Tools (46)
+## All Available Tools (44)
 
 | Tool | What It Does |
 |------|-------------|
@@ -204,7 +204,7 @@ npm run bot
 
 ## Docker Deployment
 
-The image defaults to the **MCP server** (stdio). To run the standalone bot 24/7 instead, uncomment the `command: npm run bot` line in `docker-compose.yml`, then:
+The image defaults to the **MCP server** (stdio). To run the standalone bot 24/7 instead, uncomment the `command: ["node", "dist/index.js"]` line in `docker-compose.yml`, then:
 
 ```bash
 docker-compose up -d       # Start in background
@@ -240,11 +240,32 @@ mcp-discord-bridge/
 
 ---
 
+## Read-Only Mode
+
+This server can delete channels, ban members, and remove roles. If you only want
+the AI to *read* your server, set `DISCORD_READONLY` in the `env` block:
+
+```json
+"env": {
+  "DISCORD_TOKEN": "your_token",
+  "DISCORD_READONLY": "true"
+}
+```
+
+In read-only mode only the 10 read tools (`list_*`, `get_*`, `search_messages`)
+are advertised and callable; every write/destructive tool is refused.
+
+All tools also carry MCP **annotations** (`readOnlyHint` / `destructiveHint`), so
+compatible clients can flag or confirm destructive actions before running them.
+
 ## Security
 
 - **Never commit your `.env` file** — it's already in `.gitignore`
 - Treat your `DISCORD_TOKEN` like a password — if leaked, regenerate it immediately in the Developer Portal
 - The bot can only assign roles **below its own role** in the hierarchy (Discord enforces this)
+- Grant the bot **only the permissions you need** — if you won't use moderation, don't grant Ban/Kick
+- Because the AI can read channel messages *and* act on the server, treat untrusted message content as a prompt-injection risk; use **read-only mode** for safer deployments
+- See [SECURITY.md](./SECURITY.md) for the full threat model and reporting policy
 
 ---
 

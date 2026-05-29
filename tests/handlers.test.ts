@@ -1,5 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
-import { handleToolCall } from '../mcp-handlers';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import {
+  handleToolCall,
+  isReadOnlyMode,
+  READ_ONLY_TOOLS,
+  DESTRUCTIVE_TOOLS,
+} from '../mcp-handlers';
 import type { Client } from 'discord.js';
 
 // ─── Mock Factories ──────────────────────────────────────────────────────────
@@ -472,5 +477,88 @@ describe('handleToolCall', () => {
     const result = await handleToolCall(client, 'list_channels', { guild_id: '111' });
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toBe('Error: API down');
+  });
+});
+
+// ─── Read-only mode ────────────────────────────────────────────────────────────
+
+describe('read-only mode', () => {
+  afterEach(() => {
+    delete process.env.DISCORD_READONLY;
+  });
+
+  it('isReadOnlyMode reflects the env var', () => {
+    expect(isReadOnlyMode()).toBe(false);
+    process.env.DISCORD_READONLY = 'true';
+    expect(isReadOnlyMode()).toBe(true);
+    process.env.DISCORD_READONLY = '0';
+    expect(isReadOnlyMode()).toBe(false);
+  });
+
+  it('blocks write/destructive tools when enabled', async () => {
+    process.env.DISCORD_READONLY = '1';
+    const client = mockClient();
+    const result = await handleToolCall(client, 'ban_member', {
+      guild_id: '111',
+      user_id: 'u1',
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('read-only mode');
+  });
+
+  it('still allows read-only tools when enabled', async () => {
+    process.env.DISCORD_READONLY = '1';
+    const guildsMap = new Map([['111', { id: '111', name: 'A', memberCount: 1 }]]);
+    const cache = {
+      map: (fn: (g: { id: string; name: string; memberCount: number }) => unknown) =>
+        [...guildsMap.values()].map(fn),
+    };
+    const client = mockClient({ guilds: { cache } } as unknown as Partial<Client>);
+    const result = await handleToolCall(client, 'list_guilds', {});
+    expect(result.isError).toBeUndefined();
+  });
+
+  it('read-only and destructive sets do not overlap', () => {
+    for (const name of DESTRUCTIVE_TOOLS) {
+      expect(READ_ONLY_TOOLS.has(name)).toBe(false);
+    }
+  });
+});
+
+// ─── Limit clamping ────────────────────────────────────────────────────────────
+
+describe('moderation limit clamping', () => {
+  it('ban_member clamps delete_message_days to 7', async () => {
+    const ban = vi.fn().mockResolvedValue(undefined);
+    const guild = mockGuild({ members: { me: null, fetch: vi.fn(), ban } });
+    const client = mockClient();
+    (client.guilds.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(guild);
+
+    await handleToolCall(client, 'ban_member', {
+      guild_id: '111',
+      user_id: 'u1',
+      delete_message_days: 99,
+    });
+    expect(ban).toHaveBeenCalledWith(
+      'u1',
+      expect.objectContaining({ deleteMessageSeconds: 7 * 86400 }),
+    );
+  });
+
+  it('timeout_member clamps duration to 28 days', async () => {
+    const timeout = vi.fn().mockResolvedValue(undefined);
+    const member = { user: { username: 'bob' }, timeout };
+    const guild = mockGuild({
+      members: { me: null, fetch: vi.fn().mockResolvedValue(member) },
+    });
+    const client = mockClient();
+    (client.guilds.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(guild);
+
+    await handleToolCall(client, 'timeout_member', {
+      guild_id: '111',
+      user_id: 'u1',
+      duration_minutes: 999999,
+    });
+    expect(timeout).toHaveBeenCalledWith(40320 * 60 * 1000, undefined);
   });
 });
